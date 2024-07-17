@@ -4,7 +4,6 @@ Shader "Unlit/RealMorph"
     {
         _MainTex ("Texture", 2D) = "white" {}
         _MorphTex ("Morph Texture", 2D) = "white" {}
-        _Triangle1TravelDistance ("Triangle Travel Distance", Float) = 0.
         _TimeScale ("Time Scale", Float) = 1.
         _TimeOffset ("Time Offset", Float) = 0.
         [HDR] _GlowColor ("Glow Color", Color) = (1,1,1,1)
@@ -65,7 +64,6 @@ Shader "Unlit/RealMorph"
             float4 _MainTex_ST;
             sampler2D _MorphTex;
             float4 _MorphTex_ST;
-            float _Triangle1TravelDistance;
             float _TimeScale;
             float _TimeOffset;
             float4 _GlowColor;

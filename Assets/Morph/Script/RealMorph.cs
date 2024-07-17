@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 public class RealMorph : MonoBehaviour
@@ -12,12 +13,13 @@ public class RealMorph : MonoBehaviour
     private Vector3[] vertices2;
     private Vector3[] vertices2AfterScalingAndRotating;
     private Vector2[] uv2;
+    private Vector3[] normals1;
     private Vector3[] normals2;
     private int[] triangles1;
     private int[] triangles2;
     private Vector3[] triangles2MidPoint;
     private bool[] triangles2MidPointHandled;
-    public float triangle1TravelDistance = 100f;
+    public float triangle1TravelDistance = 0.5f;
     private ComputeBuffer computeBuffer;
     public Material morphMaterial;
     public Material normalMaterial;
@@ -55,6 +57,7 @@ public class RealMorph : MonoBehaviour
         {
             myMeshStructure.MeshDecimatingVertexMerging(triangles2.Length / 3);
             vertices1 = myMeshStructure.DecimatedPositions;
+            normals1 = myMeshStructure.DecimatedNormals;
             triangles1 = myMeshStructure.DecimatedTriangles;
             equality1 = 1;
         }
@@ -62,6 +65,7 @@ public class RealMorph : MonoBehaviour
         {
             myMeshStructure.MeshRefiningTriangleSplitting(triangles2.Length / 3);
             vertices1 = myMeshStructure.RefinedPositions;
+            normals1 = myMeshStructure.RefinedNormals;
             triangles1 = myMeshStructure.RefinedTriangles;
             equality1 = -1;
         }
@@ -85,7 +89,7 @@ public class RealMorph : MonoBehaviour
         if (triangles1.Length == triangles2.Length)
         {
             myMeshStructure.SwapMesh(equality);
-            morphMaterial.SetFloat("_Triangle1TravelDistance", triangle1TravelDistance);
+            // morphMaterial.SetFloat("_Triangle1TravelDistance", triangle1TravelDistance);
             morphMaterial.SetFloat("_TimeOffset", Time.timeSinceLevelLoad);
             meshRenderer.material = morphMaterial;
         }
@@ -138,60 +142,42 @@ public class RealMorph : MonoBehaviour
 
     public void StoreDataForEachTriangle()
     {
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
         computeBuffer?.Dispose();
-        Vector3 tempNormal, tempMidPointPosition, tempDirection;
-        float tempMinDistance, currentDistance;
-        int markedMinPosition = 0;
+        Vector3 tempNormal, tempDirection;
         perTriangleDatas.Clear();
+        int ip1, ip2;
         for (int i=0;i<triangles1.Length;i+=3)
         {
-            tempNormal = Vector3.Cross(vertices1[triangles1[i + 1]] - vertices1[triangles1[i]], vertices1[triangles1[i + 2]] - vertices1[triangles1[i]]);
-            tempMidPointPosition = 
-            (
-                (vertices1[triangles1[i]] + vertices1[triangles1[i + 1]] + vertices1[triangles1[i + 2]]) / 3
-                + tempNormal.normalized * triangle1TravelDistance
-            );
-            tempMinDistance= float.MaxValue;
-
-            for (int j=0;j<triangles2MidPoint.Length;j++)
-            {
-                if (!triangles2MidPointHandled[j])
-                {
-                    currentDistance = Vector3.Distance(tempMidPointPosition, triangles2MidPoint[j]);
-                    if (currentDistance < tempMinDistance)
-                    {
-                        tempMinDistance = currentDistance;
-                        markedMinPosition = j;
-                    }
-                }
-            }
-            triangles2MidPointHandled[markedMinPosition] = true;
-
-            markedMinPosition *= 3;
-            tempDirection = tempNormal * triangle1TravelDistance;
+            ip1 = i + 1; ip2 = i + 2;
+            tempNormal = Vector3.Cross(vertices1[triangles1[ip1]] - vertices1[triangles1[i]], vertices1[triangles1[ip2]] - vertices1[triangles1[i]]);
+            tempDirection = tempNormal.normalized * triangle1TravelDistance;
             perTriangleDatas.Add
             (
                 new PerTriangleData
                 (
-                    vertices2AfterScalingAndRotating[triangles2[markedMinPosition]],
-                    vertices2AfterScalingAndRotating[triangles2[markedMinPosition + 1]],
-                    vertices2AfterScalingAndRotating[triangles2[markedMinPosition + 2]],
-                    uv2[triangles2[markedMinPosition]],
-                    uv2[triangles2[markedMinPosition + 1]],
-                    uv2[triangles2[markedMinPosition + 2]],
-                    normals2[triangles2[markedMinPosition]],
-                    normals2[triangles2[markedMinPosition + 1]],
-                    normals2[triangles2[markedMinPosition + 2]],
+                    vertices2AfterScalingAndRotating[triangles2[i]],
+                    vertices2AfterScalingAndRotating[triangles2[ip1]],
+                    vertices2AfterScalingAndRotating[triangles2[ip2]],
+                    uv2[triangles2[i]],
+                    uv2[triangles2[ip1]],
+                    uv2[triangles2[ip2]],
+                    normals2[triangles2[i]],
+                    normals2[triangles2[ip1]],
+                    normals2[triangles2[ip2]],
                     tempDirection,
                     vertices1[triangles1[i]] + tempDirection,
-                    vertices1[triangles1[i + 1]] + tempDirection,
-                    vertices1[triangles1[i + 2]] + tempDirection
+                    vertices1[triangles1[ip1]] + tempDirection,
+                    vertices1[triangles1[ip2]] + tempDirection
                 )
             );
         }
 
         computeBuffer = new ComputeBuffer(perTriangleDatas.Count, 3 * sizeof(float) * 10 + 2 * sizeof(float) * 3);
         computeBuffer.SetData(perTriangleDatas.ToArray());
+        stopwatch.Stop();
+        UnityEngine.Debug.Log("Time taken to store data for each triangle: " + stopwatch.ElapsedMilliseconds + " ms");
 
         morphMaterial.SetBuffer("_PerTriangleData", computeBuffer);
     }

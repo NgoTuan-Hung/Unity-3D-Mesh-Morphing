@@ -1,9 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Random = UnityEngine.Random;
-
+using Debug = UnityEngine.Debug;
 public class MyMeshStructure : MonoBehaviour
 {
     private MeshFilter meshFilter;
@@ -24,7 +25,6 @@ public class MyMeshStructure : MonoBehaviour
     private int[] refinedTriangles;
     private List<Vertex> verticesData;
     private List<Triangle> trianglesData;
-
     public MeshFilter MeshFilter { get => meshFilter; set => meshFilter = value; }
     public SkinnedMeshRenderer SkinnedMeshRenderer { get => skinnedMeshRenderer; set => skinnedMeshRenderer = value; }
     public bool MeshFilterBool { get => meshFilterBool; set => meshFilterBool = value; }
@@ -43,7 +43,6 @@ public class MyMeshStructure : MonoBehaviour
     public Vector3[] RefinedNormals { get => refinedNormals; set => refinedNormals = value; }
     public Vector2[] RefinedUVs { get => refinedUVs; set => refinedUVs = value; }
     public int[] RefinedTriangles { get => refinedTriangles; set => refinedTriangles = value; }
-
     // Start is called before the first frame update
     void Awake()
     {
@@ -68,7 +67,6 @@ public class MyMeshStructure : MonoBehaviour
             Debug.LogError("No MeshFilter or SkinnedMeshRenderer found on the GameObject");
         }
     }
-
     public void ResetMesh()
     {
         if (meshFilterBool)
@@ -88,7 +86,6 @@ public class MyMeshStructure : MonoBehaviour
             skinnedMeshRenderer.sharedMesh.triangles = baseTriangles;
         }
     }
-
     public void GenerateMeshStructure()
     {
         verticesData = new List<Vertex>();
@@ -101,7 +98,6 @@ public class MyMeshStructure : MonoBehaviour
             vertex.uv = baseUVs[i];
             verticesData.Add(vertex);
         }
-
         int ipj;
         for (int i = 0; i < baseTriangles.Length; i += 3)
         {
@@ -116,12 +112,12 @@ public class MyMeshStructure : MonoBehaviour
             trianglesData.Add(triangle);
         }
     }
-
     public void MeshDecimatingVertexMerging(int faceCount)
     {
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
         GenerateMeshStructure();
         Debug.Log("Current Face Count: " + trianglesData.Count);
-
         Vertex vcore, ncore;
         List<Triangle> unhandledTriangles, removedTriangles, filteredTriangles;
         Triangle tempTriangle;
@@ -133,44 +129,40 @@ public class MyMeshStructure : MonoBehaviour
             {
                 if (currentFaceCount == faceCount + 1)
                 {
-                    do
+                    vcoreTravelIndex = Random.Range(0, verticesData.Count);
+                    vcore = verticesData[(int)vcoreTravelIndex];
+                    while (vcore.isNull)
                     {
                         vcore = verticesData[(int)(vcoreTravelIndex++ % verticesData.Count)];
                     }
-                    while (vcore.isNull);
                     tempTriangle = vcore.triangles[0];
-
                     Vertex n1 = null, n2 = null;
                     for (int i=0;i<3;i++) if (tempTriangle.vertices[i] != vcore)
                     {
                         if (n1 == null) n1 = tempTriangle.vertices[i];
                         else n2 = tempTriangle.vertices[i];
                     }
-
                     vcore.position = (n1.position + n2.position) / 2;
                     vcore.normal = (n1.normal + n2.normal) / 2;
                     vcore.uv = (n1.uv + n2.uv) / 2;
                     tempTriangle.vertices.ForEach(vertex => vertex.triangles.Remove(tempTriangle));
-                    // trianglesData.Remove(tempTriangle);
                     tempTriangle.isNull = true; currentFaceCount--;
-
                     tempTriangle.vertices.ForEach(vertex => 
                     {
                         if (vertex.triangles.Count == 0) 
-                        // verticesData.Remove(vertex);
                         vertex.isNull = true;
                     });
                 } else break;
             }
             else
             {
-                do 
+                vcoreTravelIndex = Random.Range(0, verticesData.Count);
+                vcore = verticesData[(int)vcoreTravelIndex];
+                while (vcore.isNull)
                 {
                     vcore = verticesData[(int)(vcoreTravelIndex++ % verticesData.Count)];
                 }
-                while (vcore.isNull);
                 unhandledTriangles = vcore.triangles;
-
                 tempTriangle = unhandledTriangles[0];
                 ncore = null;
                 for (int i=0;i<3;i++) if (tempTriangle.vertices[i] != vcore)
@@ -178,7 +170,6 @@ public class MyMeshStructure : MonoBehaviour
                     ncore = tempTriangle.vertices[i];
                     break;
                 }
-
                 removedTriangles = new List<Triangle>();
                 filteredTriangles = new List<Triangle>();
                 for (int i=0;i<unhandledTriangles.Count;i++)
@@ -186,14 +177,11 @@ public class MyMeshStructure : MonoBehaviour
                     if (unhandledTriangles[i].vertices.Contains(ncore))
                     {
                         removedTriangles.Add(unhandledTriangles[i]);
-                        // trianglesData.Remove(unhandledTriangles[i]);
                         unhandledTriangles[i].isNull = true;
-                        // unhandledTriangles.Remove(unhandledTriangles[i--]);
                         currentFaceCount--;
                     }
                     else filteredTriangles.Add(unhandledTriangles[i]);
                 }
-
                 removedTriangles.ForEach(triangle => 
                 {
                     triangle.vertices.ForEach(vertex => 
@@ -201,20 +189,17 @@ public class MyMeshStructure : MonoBehaviour
                         vertex.triangles.Remove(triangle);
                     });
                 });
-
                 filteredTriangles.ForEach(triangle => 
                 {
                     triangle.vertices[triangle.vertices.IndexOf(vcore)] = ncore;
                     ncore.triangles.Add(triangle);
                 });
-
                 vcore.triangles = new List<Triangle>();
                 
                 removedTriangles.ForEach(triangle => 
                     triangle.vertices.ForEach(vertex => 
                     {
                         if (vertex.triangles.Count == 0) 
-                        // verticesData.Remove(vertex);
                         vertex.isNull = true;
                     })
                 );
@@ -228,7 +213,6 @@ public class MyMeshStructure : MonoBehaviour
         trianglesData = copyTempTrianglesData;
         Debug.Log("Vertex Count: " + verticesData.Count + "-----Final Vertex Count: " + verticesData.Count);
         Debug.Log("Triangle Count: " + trianglesData.Count + "-----Final Triangle Count: " + trianglesData.Count);
-
         Vector3[] finalVerticesForMesh = new Vector3[verticesData.Count];
         Vector3[] finalNormalsForMesh = new Vector3[verticesData.Count];
         Vector2[] finalUVsForMesh = new Vector2[verticesData.Count];
@@ -238,14 +222,14 @@ public class MyMeshStructure : MonoBehaviour
             finalVerticesForMesh[i] = verticesData[i].position;
             finalNormalsForMesh[i] = verticesData[i].normal;
             finalUVsForMesh[i] = verticesData[i].uv;
+            verticesData[i].finalIndex = i;
         }
         for (int i=0;i<trianglesData.Count;i++)
         {
-            finalTrianglesForMesh[i * 3] = verticesData.IndexOf(trianglesData[i].vertices[0]);
-            finalTrianglesForMesh[i * 3 + 1] = verticesData.IndexOf(trianglesData[i].vertices[1]);
-            finalTrianglesForMesh[i * 3 + 2] = verticesData.IndexOf(trianglesData[i].vertices[2]);
+            finalTrianglesForMesh[i * 3] = trianglesData[i].vertices[0].finalIndex;
+            finalTrianglesForMesh[i * 3 + 1] = trianglesData[i].vertices[1].finalIndex;
+            finalTrianglesForMesh[i * 3 + 2] = trianglesData[i].vertices[2].finalIndex;
         }
-
         if (meshFilterBool)
         {
             decimatedPositions = finalVerticesForMesh;
@@ -259,66 +243,62 @@ public class MyMeshStructure : MonoBehaviour
             return;
             #endregion
         }
-    }
 
+        stopwatch.Stop();
+        Debug.Log("Time taken to decimate mesh: " + stopwatch.ElapsedMilliseconds + " ms");
+    }
     public void MeshRefiningTriangleSplitting(int faceCount)
     {
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
         GenerateMeshStructure();
         Debug.Log("Current Face Count: " + trianglesData.Count);
-
         Vertex vcore, ncore;
-        List<Triangle> unhandledTriangles, removedTriangles;
         Triangle tempTriangle;
-
         Vertex v1,v2,v3;
         Triangle t1,t2,t3;
         long vcoreTravelIndex = 0;
         int currentFaceCount = trianglesData.Count;
-
         while (true)
         {
             if (currentFaceCount >= faceCount - 1)
             {
                 if (currentFaceCount == faceCount - 1)
                 {
-                    do
+                    vcoreTravelIndex = Random.Range(0, verticesData.Count);
+                    vcore = verticesData[(int)vcoreTravelIndex];
+                    while (vcore.isNull)
                     {
                         vcore = verticesData[(int)(vcoreTravelIndex++ % verticesData.Count)];
                     }
-                    while (vcore.isNull);
                     tempTriangle = vcore.triangles[0];
-
                     Vertex n1 = null, n2 = null;
                     for (int i=0;i<3;i++) if (tempTriangle.vertices[i] != vcore)
                     {
                         if (n1 == null) n1 = tempTriangle.vertices[i];
                         else n2 = tempTriangle.vertices[i];
                     }
-
                     vcore.position = (n1.position + n2.position) / 2;
                     vcore.normal = (n1.normal + n2.normal) / 2;
                     vcore.uv = (n1.uv + n2.uv) / 2;
                     tempTriangle.vertices.ForEach(vertex => vertex.triangles.Remove(tempTriangle));
-                    // trianglesData.Remove(tempTriangle);
                     tempTriangle.isNull = true; currentFaceCount--;
-
                     tempTriangle.vertices.ForEach(vertex => 
                     {
                         if (vertex.triangles.Count == 0) 
-                        // verticesData.Remove(vertex);
                         vertex.isNull = true;
                     });
                 } else break;
             }
             else
             {
-                do 
+                vcoreTravelIndex = Random.Range(0, verticesData.Count);
+                ncore = verticesData[(int)vcoreTravelIndex];
+                while (ncore.isNull)
                 {
                     ncore = verticesData[(int)(vcoreTravelIndex++ % verticesData.Count)];
                 }
-                while (ncore.isNull);
                 tempTriangle = ncore.triangles[0];
-
                 v1 = tempTriangle.vertices[0];
                 v2 = tempTriangle.vertices[1];
                 v3 = tempTriangle.vertices[2];
@@ -330,29 +310,24 @@ public class MyMeshStructure : MonoBehaviour
                 vcore.normal = (v1.normal + v2.normal + v3.normal) / 3;
                 vcore.uv = (v1.uv + v2.uv + v3.uv) / 3;
                 verticesData.Add(vcore);
-
                 t1 = new Triangle();
                 t1.vertices = new List<Vertex>();
                 t1.vertices.Add(v1); t1.vertices.Add(v2); t1.vertices.Add(vcore);
                 v1.triangles.Add(t1); v2.triangles.Add(t1); vcore.triangles.Add(t1);
                 trianglesData.Add(t1);
-
                 t2 = new Triangle();
                 t2.vertices = new List<Vertex>();
                 t2.vertices.Add(v2); t2.vertices.Add(v3); t2.vertices.Add(vcore);
                 v2.triangles.Add(t2); v3.triangles.Add(t2); vcore.triangles.Add(t2);
                 trianglesData.Add(t2);
-
                 t3 = new Triangle();
                 t3.vertices = new List<Vertex>();
                 t3.vertices.Add(v3); t3.vertices.Add(v1); t3.vertices.Add(vcore);
                 v3.triangles.Add(t3); v1.triangles.Add(t3); vcore.triangles.Add(t3);
                 trianglesData.Add(t3);
-
                 currentFaceCount += 2;
             }
         }
-
         List<Vertex> copyTempVerticesData = new List<Vertex>();
         List<Triangle> copyTempTrianglesData = new List<Triangle>();
         for (int i=0;i<verticesData.Count;i++) if (!verticesData[i].isNull) copyTempVerticesData.Add(verticesData[i]);
@@ -361,7 +336,6 @@ public class MyMeshStructure : MonoBehaviour
         trianglesData = copyTempTrianglesData;
         Debug.Log("Vertex Count: " + verticesData.Count + "-----Final Vertex Count: " + verticesData.Count);
         Debug.Log("Triangle Count: " + trianglesData.Count + "-----Final Triangle Count: " + trianglesData.Count);
-
         Vector3[] finalVerticesForMesh = new Vector3[verticesData.Count];
         Vector3[] finalNormalsForMesh = new Vector3[verticesData.Count];
         Vector2[] finalUVsForMesh = new Vector2[verticesData.Count];
@@ -371,14 +345,14 @@ public class MyMeshStructure : MonoBehaviour
             finalVerticesForMesh[i] = verticesData[i].position;
             finalNormalsForMesh[i] = verticesData[i].normal;
             finalUVsForMesh[i] = verticesData[i].uv;
+            verticesData[i].finalIndex = i;
         }
         for (int i=0;i<trianglesData.Count;i++)
         {
-            finalTrianglesForMesh[i * 3] = verticesData.IndexOf(trianglesData[i].vertices[0]);
-            finalTrianglesForMesh[i * 3 + 1] = verticesData.IndexOf(trianglesData[i].vertices[1]);
-            finalTrianglesForMesh[i * 3 + 2] = verticesData.IndexOf(trianglesData[i].vertices[2]);
+            finalTrianglesForMesh[i * 3] = trianglesData[i].vertices[0].finalIndex;
+            finalTrianglesForMesh[i * 3 + 1] = trianglesData[i].vertices[1].finalIndex;
+            finalTrianglesForMesh[i * 3 + 2] = trianglesData[i].vertices[2].finalIndex;
         }
-
         if (meshFilterBool)
         {
             refinedPositions = finalVerticesForMesh;
@@ -392,8 +366,10 @@ public class MyMeshStructure : MonoBehaviour
             return;
             #endregion
         }
-    }
 
+        stopwatch.Stop();
+        Debug.Log("Time taken to refine mesh: " + stopwatch.ElapsedMilliseconds + " ms");
+    }
     public void SwapMesh(int equality)
     {
         if (meshFilterBool)
@@ -424,14 +400,12 @@ public class MyMeshStructure : MonoBehaviour
             #endregion
         }
     }
-
     // Update is called once per frame
     void Update()
     {
         
     }
 }
-
 public class Vertex
 {
     public Vector3 position;
@@ -439,17 +413,14 @@ public class Vertex
     public Vector2 uv;
     public List<Triangle> triangles = new List<Triangle>();
     public bool isNull = false;
-
+    public int finalIndex;
     public String ToString()
     {
         return "Position: " + position.ToString() + "-----Normal: " + normal.ToString() + "-----UV: " + uv.ToString() + "-----Triangle Count: " + triangles.Count;
     }
-
     public Vertex()
     {
-
     }
-
     public Vertex(Vertex vertex)
     {
         position = vertex.position;
@@ -457,7 +428,6 @@ public class Vertex
         uv = vertex.uv;
     }
 }
-
 public class Triangle
 {
     public List<Vertex> vertices;

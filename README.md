@@ -6,7 +6,7 @@
 | ------ | ----------- |
 | Algorithm   | Vertex Merging for mesh decimation and Triangle Splitting for mesh refinement |
 | Shader | Yes with compute buffer |
-| Performance    | Fast for 10k tris mesh but for something like 300k tris, it's bad |
+| Performance    | Pretty good, 40ms from 6k to 30k tris |
 | Support | Only mesh with single mesh renderer only|
 
 ### Key
