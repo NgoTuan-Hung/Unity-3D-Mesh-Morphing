@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 public class RealMorph : MonoBehaviour
 {
@@ -142,9 +143,9 @@ public class RealMorph : MonoBehaviour
 
     public void StoreDataForEachTriangle()
     {
+        computeBuffer?.Release();
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
-        computeBuffer?.Dispose();
         Vector3 tempNormal, tempDirection;
         perTriangleDatas.Clear();
         int ip1, ip2;
@@ -152,7 +153,9 @@ public class RealMorph : MonoBehaviour
         {
             ip1 = i + 1; ip2 = i + 2;
             tempNormal = Vector3.Cross(vertices1[triangles1[ip1]] - vertices1[triangles1[i]], vertices1[triangles1[ip2]] - vertices1[triangles1[i]]);
+            tempNormal = tempNormal == Vector3.zero ? new Vector3(Random.Range(0.1f, 1f), Random.Range(0.1f, 1f), Random.Range(0.1f, 1f)) : tempNormal;
             tempDirection = tempNormal.normalized * triangle1TravelDistance;
+
             perTriangleDatas.Add
             (
                 new PerTriangleData
@@ -177,7 +180,7 @@ public class RealMorph : MonoBehaviour
         computeBuffer = new ComputeBuffer(perTriangleDatas.Count, 3 * sizeof(float) * 10 + 2 * sizeof(float) * 3);
         computeBuffer.SetData(perTriangleDatas.ToArray());
         stopwatch.Stop();
-        UnityEngine.Debug.Log("Time taken to store data for each triangle: " + stopwatch.ElapsedMilliseconds + " ms");
+        Debug.Log("Time taken to store data for each triangle: " + stopwatch.ElapsedMilliseconds + " ms");
 
         morphMaterial.SetBuffer("_PerTriangleData", computeBuffer);
     }
