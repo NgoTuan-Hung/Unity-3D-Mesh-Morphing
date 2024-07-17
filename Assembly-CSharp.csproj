@@ -65,6 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Morph\Script\MyMeshStructure.cs" />
+    <Compile Include="Assets\Morph\MorphChar\ninja\SkinnedMeshTest.cs" />
     <Compile Include="Assets\Morph\Script\TestScript.cs" />
     <Compile Include="Assets\Morph\Script\RealMorph.cs" />
     <Compile Include="Assets\Morph\Script\CameraMovementScript.cs" />
