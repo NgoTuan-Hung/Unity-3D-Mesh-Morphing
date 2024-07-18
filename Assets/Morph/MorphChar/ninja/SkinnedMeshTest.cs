@@ -6,6 +6,7 @@ public class SkinnedMeshTest : MonoBehaviour
 {
     public SkinnedMeshRenderer[] skinnedMeshRenderers;
     public Material[] materials;
+    public MeshFilter[] meshFilters;
     public GameObject test;
     // Start is called before the first frame update
     void Start()
@@ -16,6 +17,7 @@ public class SkinnedMeshTest : MonoBehaviour
         {
             materials[i] = skinnedMeshRenderers[i].material;
         }
+        meshFilters = new MeshFilter[skinnedMeshRenderers.Length];
         AddMeshToGameObject();
     }
 
@@ -26,14 +28,18 @@ public class SkinnedMeshTest : MonoBehaviour
             GameObject part = Instantiate(new GameObject(), test.transform);
             MeshFilter meshFilter = part.AddComponent<MeshFilter>();
             MeshRenderer meshRenderer = part.AddComponent<MeshRenderer>();
-            meshFilter.mesh = skinnedMeshRenderers[i].sharedMesh;
+            meshFilters[i] = meshFilter;
+            meshFilter.mesh = new Mesh();
             meshRenderer.material = materials[i];
         }
     }
 
-    // Update is called once per frame
-    void Update()
+    public void FixedUpdate()
     {
-        
+        for (int i = 0; i < skinnedMeshRenderers.Length; i++)
+        {
+            // meshFilters[i].mesh.Clear();
+            skinnedMeshRenderers[i].BakeMesh(meshFilters[i].mesh);
+        }
     }
 }
