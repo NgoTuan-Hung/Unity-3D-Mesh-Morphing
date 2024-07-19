@@ -10,7 +10,6 @@ public class MyMeshStructure : MonoBehaviour
     private MeshFilter meshFilter;
     private SkinnedMeshRenderer skinnedMeshRenderer;
     private bool meshFilterBool = false;
-    private bool skinnedMeshRendererBool = false;
     private Vector3[] basePositions;
     private Vector3[] baseNormals;
     private Vector2[] baseUVs;
@@ -28,7 +27,6 @@ public class MyMeshStructure : MonoBehaviour
     public MeshFilter MeshFilter { get => meshFilter; set => meshFilter = value; }
     public SkinnedMeshRenderer SkinnedMeshRenderer { get => skinnedMeshRenderer; set => skinnedMeshRenderer = value; }
     public bool MeshFilterBool { get => meshFilterBool; set => meshFilterBool = value; }
-    public bool SkinnedMeshRendererBool { get => skinnedMeshRendererBool; set => skinnedMeshRendererBool = value; }
     public Vector3[] BasePositions { get => basePositions; set => basePositions = value; }
     public Vector3[] BaseNormals { get => baseNormals; set => baseNormals = value; }
     public Vector2[] BaseUVs { get => baseUVs; set => baseUVs = value; }
@@ -54,17 +52,28 @@ public class MyMeshStructure : MonoBehaviour
             baseUVs = meshFilter.mesh.uv;
             baseTriangles = meshFilter.mesh.triangles;
         }
-        else if (TryGetComponent<SkinnedMeshRenderer>(out skinnedMeshRenderer))
-        {
-            skinnedMeshRendererBool = true;
-            basePositions = skinnedMeshRenderer.sharedMesh.vertices;
-            baseNormals = skinnedMeshRenderer.sharedMesh.normals;
-            baseUVs = skinnedMeshRenderer.sharedMesh.uv;
-            baseTriangles = skinnedMeshRenderer.sharedMesh.triangles;
-        }
         else
         {
-            Debug.LogError("No MeshFilter or SkinnedMeshRenderer found on the GameObject");
+            if ((meshFilter = GetComponentInChildren<MeshFilter>()) != null)
+            {
+                meshFilterBool = true;
+                basePositions = meshFilter.mesh.vertices;
+                baseNormals = meshFilter.mesh.normals;
+                baseUVs = meshFilter.mesh.uv;
+                baseTriangles = meshFilter.mesh.triangles;
+            }
+            else
+            {
+                if (!TryGetComponent<SkinnedMeshRenderer>(out skinnedMeshRenderer))
+                {
+                    skinnedMeshRenderer = GetComponentInChildren<SkinnedMeshRenderer>();
+                }
+
+                basePositions = skinnedMeshRenderer.sharedMesh.vertices;
+                baseNormals = skinnedMeshRenderer.sharedMesh.normals;
+                baseUVs = skinnedMeshRenderer.sharedMesh.uv;
+                baseTriangles = skinnedMeshRenderer.sharedMesh.triangles;
+            }
         }
     }
     public void ResetMesh()
@@ -77,7 +86,7 @@ public class MyMeshStructure : MonoBehaviour
             meshFilter.mesh.uv = baseUVs;
             meshFilter.mesh.triangles = baseTriangles;
         }
-        else if (skinnedMeshRendererBool)
+        else
         {
             skinnedMeshRenderer.sharedMesh.Clear(false);
             skinnedMeshRenderer.sharedMesh.vertices = basePositions;
@@ -230,19 +239,11 @@ public class MyMeshStructure : MonoBehaviour
             finalTrianglesForMesh[i * 3 + 1] = trianglesData[i].vertices[1].finalIndex;
             finalTrianglesForMesh[i * 3 + 2] = trianglesData[i].vertices[2].finalIndex;
         }
-        if (meshFilterBool)
-        {
-            decimatedPositions = finalVerticesForMesh;
-            decimatedNormals = finalNormalsForMesh;
-            decimatedUVs = finalUVsForMesh;
-            decimatedTriangles = finalTrianglesForMesh;
-        }
-        else if (skinnedMeshRendererBool)
-        {
-            #region Not Supported
-            return;
-            #endregion
-        }
+        
+        decimatedPositions = finalVerticesForMesh;
+        decimatedNormals = finalNormalsForMesh;
+        decimatedUVs = finalUVsForMesh;
+        decimatedTriangles = finalTrianglesForMesh;
 
         stopwatch.Stop();
         Debug.Log("Time taken to decimate mesh: " + stopwatch.ElapsedMilliseconds + " ms");
@@ -353,51 +354,32 @@ public class MyMeshStructure : MonoBehaviour
             finalTrianglesForMesh[i * 3 + 1] = trianglesData[i].vertices[1].finalIndex;
             finalTrianglesForMesh[i * 3 + 2] = trianglesData[i].vertices[2].finalIndex;
         }
-        if (meshFilterBool)
-        {
-            refinedPositions = finalVerticesForMesh;
-            refinedNormals = finalNormalsForMesh;
-            refinedUVs = finalUVsForMesh;
-            refinedTriangles = finalTrianglesForMesh;
-        }
-        else if (skinnedMeshRendererBool)
-        {
-            #region Not Supported
-            return;
-            #endregion
-        }
+
+        refinedPositions = finalVerticesForMesh;
+        refinedNormals = finalNormalsForMesh;
+        refinedUVs = finalUVsForMesh;
+        refinedTriangles = finalTrianglesForMesh;
 
         stopwatch.Stop();
         Debug.Log("Time taken to refine mesh: " + stopwatch.ElapsedMilliseconds + " ms");
     }
     public void SwapMesh(int equality)
     {
-        if (meshFilterBool)
+        if (equality == 1)
         {
-            if (equality == 1)
-            {
-                meshFilter.mesh.Clear(false);
-                meshFilter.mesh.vertices = decimatedPositions;
-                meshFilter.mesh.normals = decimatedNormals;
-                meshFilter.mesh.uv = decimatedUVs;
-                meshFilter.mesh.triangles = decimatedTriangles;
-            }
-            else if (equality == -1)
-            {
-                meshFilter.mesh.Clear(false);
-                meshFilter.mesh.vertices = refinedPositions;
-                meshFilter.mesh.normals = refinedNormals;
-                meshFilter.mesh.uv = refinedUVs;
-                meshFilter.mesh.triangles = refinedTriangles;
-            }
-            else return;
-            
+            meshFilter.mesh.Clear(false);
+            meshFilter.mesh.vertices = decimatedPositions;
+            meshFilter.mesh.normals = decimatedNormals;
+            meshFilter.mesh.uv = decimatedUVs;
+            meshFilter.mesh.triangles = decimatedTriangles;
         }
-        else if (skinnedMeshRendererBool)
+        else if (equality == -1)
         {
-            #region Not Supported
-            return;
-            #endregion
+            meshFilter.mesh.Clear(false);
+            meshFilter.mesh.vertices = refinedPositions;
+            meshFilter.mesh.normals = refinedNormals;
+            meshFilter.mesh.uv = refinedUVs;
+            meshFilter.mesh.triangles = refinedTriangles;
         }
     }
     // Update is called once per frame

@@ -9,6 +9,8 @@ public class RealMorph : MonoBehaviour
     public MeshFilter mesh1;
     public MeshFilter mesh2;
     public MeshRenderer meshRenderer2;
+    public SkinnedMeshRenderer skinnedMeshRenderer2;
+    public bool meshRenderer2Bool = false;
     public MyMeshStructure myMeshStructure;
     private Vector3[] vertices1;
     private Vector3[] vertices2;
@@ -41,13 +43,37 @@ public class RealMorph : MonoBehaviour
 
     public int PrepareMorphing(GameObject gameObject)
     {
-        mesh2 = gameObject.GetComponent<MeshFilter>();
-        meshRenderer2 = gameObject.GetComponent<MeshRenderer>();
-        vertices2 = mesh2.mesh.vertices;
-        triangles2 = mesh2.mesh.triangles;
+        meshRenderer2Bool = false;
+        if ((mesh2 = gameObject.GetComponent<MeshFilter>()) == null)
+        {
+            if ((mesh2 = gameObject.GetComponentInChildren<MeshFilter>()) == null)
+            {
+                if ((skinnedMeshRenderer2 = gameObject.GetComponent<SkinnedMeshRenderer>()) == null)
+                {
+                    skinnedMeshRenderer2 = gameObject.GetComponentInChildren<SkinnedMeshRenderer>();
+                }
+            }
+            else meshRenderer2Bool = true;
+        }
+        else meshRenderer2Bool = true;
+
+        if (meshRenderer2Bool)
+        {
+            meshRenderer2 = gameObject.GetComponent<MeshRenderer>();
+            vertices2 = mesh2.mesh.vertices;
+            uv2 = mesh2.mesh.uv;
+            normals2 = mesh2.mesh.normals;
+            triangles2 = mesh2.mesh.triangles;
+        }
+        else
+        {
+            vertices2 = mesh2.sharedMesh.vertices;
+            uv2 = mesh2.sharedMesh.uv;
+            normals2 = mesh2.sharedMesh.normals;
+            triangles2 = mesh2.sharedMesh.triangles;
+        }
+        
         triangles2MidPoint = new Vector3[triangles2.Length / 3];
-        uv2 = mesh2.mesh.uv;
-        normals2 = mesh2.mesh.normals;
         triangles2MidPointHandled = new bool[triangles2MidPoint.Length];
         for (int i = 0; i < triangles2MidPointHandled.Length; i++) triangles2MidPointHandled[i] = false;
         vertices1 = mesh1.mesh.vertices;
