@@ -73,6 +73,7 @@
   <ItemGroup>
     <None Include="Assets\Morph\DemonHunter\Color.shader" />
     <None Include="Assets\Skybox Shaders\RGBM Cubed Skybox.shader" />
+    <None Include="Assets\Morph\MorphChar\death fire\GhostShader.shader" />
     <None Include="Assets\Skybox Shaders\Horizontal Skybox.shader" />
     <None Include="Assets\Skybox Shaders\Horizon With Sun Skybox.shader" />
     <None Include="Assets\Skybox Shaders\Gradient Skybox.shader" />
