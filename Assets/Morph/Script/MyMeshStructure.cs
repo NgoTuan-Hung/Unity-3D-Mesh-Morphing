@@ -8,6 +8,7 @@ using Debug = UnityEngine.Debug;
 public class MyMeshStructure : MonoBehaviour
 {
     private MeshFilter meshFilter;
+    private MeshRenderer meshRenderer;
     private SkinnedMeshRenderer skinnedMeshRenderer;
     private bool meshFilterBool = false;
     private Vector3[] basePositions;
@@ -24,6 +25,7 @@ public class MyMeshStructure : MonoBehaviour
     private int[] refinedTriangles;
     private List<Vertex> verticesData;
     private List<Triangle> trianglesData;
+    private Material mainMaterial;
     public MeshFilter MeshFilter { get => meshFilter; set => meshFilter = value; }
     public SkinnedMeshRenderer SkinnedMeshRenderer { get => skinnedMeshRenderer; set => skinnedMeshRenderer = value; }
     public bool MeshFilterBool { get => meshFilterBool; set => meshFilterBool = value; }
@@ -41,6 +43,9 @@ public class MyMeshStructure : MonoBehaviour
     public Vector3[] RefinedNormals { get => refinedNormals; set => refinedNormals = value; }
     public Vector2[] RefinedUVs { get => refinedUVs; set => refinedUVs = value; }
     public int[] RefinedTriangles { get => refinedTriangles; set => refinedTriangles = value; }
+    public MeshRenderer MeshRenderer { get => meshRenderer; set => meshRenderer = value; }
+    public Material MainMaterial { get => mainMaterial; set => mainMaterial = value; }
+
     // Start is called before the first frame update
     void Awake()
     {
@@ -51,6 +56,8 @@ public class MyMeshStructure : MonoBehaviour
             baseNormals = meshFilter.mesh.normals;
             baseUVs = meshFilter.mesh.uv;
             baseTriangles = meshFilter.mesh.triangles;
+            meshRenderer = GetComponent<MeshRenderer>();
+            mainMaterial = meshRenderer.material;
         }
         else
         {
@@ -61,6 +68,8 @@ public class MyMeshStructure : MonoBehaviour
                 baseNormals = meshFilter.mesh.normals;
                 baseUVs = meshFilter.mesh.uv;
                 baseTriangles = meshFilter.mesh.triangles;
+                meshRenderer = GetComponentInChildren<MeshRenderer>();
+                mainMaterial = meshRenderer.material;
             }
             else
             {
@@ -73,6 +82,7 @@ public class MyMeshStructure : MonoBehaviour
                 baseNormals = skinnedMeshRenderer.sharedMesh.normals;
                 baseUVs = skinnedMeshRenderer.sharedMesh.uv;
                 baseTriangles = skinnedMeshRenderer.sharedMesh.triangles;
+                mainMaterial = skinnedMeshRenderer.material;
             }
         }
     }
@@ -367,19 +377,87 @@ public class MyMeshStructure : MonoBehaviour
     {
         if (equality == 1)
         {
-            meshFilter.mesh.Clear(false);
-            meshFilter.mesh.vertices = decimatedPositions;
-            meshFilter.mesh.normals = decimatedNormals;
-            meshFilter.mesh.uv = decimatedUVs;
-            meshFilter.mesh.triangles = decimatedTriangles;
+            if (meshFilterBool)
+            {
+                meshFilter.mesh.Clear(false);
+                meshFilter.mesh.vertices = decimatedPositions;
+                meshFilter.mesh.normals = decimatedNormals;
+                meshFilter.mesh.uv = decimatedUVs;
+                meshFilter.mesh.triangles = decimatedTriangles;
+            }
+            else
+            {
+                skinnedMeshRenderer.sharedMesh.Clear(false);
+                skinnedMeshRenderer.sharedMesh.vertices = decimatedPositions;
+                skinnedMeshRenderer.sharedMesh.normals = decimatedNormals;
+                skinnedMeshRenderer.sharedMesh.uv = decimatedUVs;
+                skinnedMeshRenderer.sharedMesh.triangles = decimatedTriangles;
+            }
         }
         else if (equality == -1)
         {
+            if (meshFilterBool)
+            {
+                meshFilter.mesh.Clear(false);
+                meshFilter.mesh.vertices = refinedPositions;
+                meshFilter.mesh.normals = refinedNormals;
+                meshFilter.mesh.uv = refinedUVs;
+                meshFilter.mesh.triangles = refinedTriangles;
+            }
+            else
+            {
+                skinnedMeshRenderer.sharedMesh.Clear(false);
+                skinnedMeshRenderer.sharedMesh.vertices = refinedPositions;
+                skinnedMeshRenderer.sharedMesh.normals = refinedNormals;
+                skinnedMeshRenderer.sharedMesh.uv = refinedUVs;
+                skinnedMeshRenderer.sharedMesh.triangles = refinedTriangles;
+            }
+        }
+    }
+
+    public void TrickSwapMesh(Vector3[] positions, Vector2[] uvs, int[] triangles, Material material)
+    {
+        if (meshFilterBool)
+        {
             meshFilter.mesh.Clear(false);
-            meshFilter.mesh.vertices = refinedPositions;
-            meshFilter.mesh.normals = refinedNormals;
-            meshFilter.mesh.uv = refinedUVs;
-            meshFilter.mesh.triangles = refinedTriangles;
+            meshFilter.mesh.vertices = positions;
+            meshFilter.mesh.uv = uvs;
+            meshFilter.mesh.triangles = triangles;
+            meshFilter.mesh.RecalculateNormals();
+            meshRenderer.material = material;
+        }
+        else
+        {
+            skinnedMeshRenderer.sharedMesh.Clear(false);
+            skinnedMeshRenderer.sharedMesh.vertices = positions;
+            skinnedMeshRenderer.sharedMesh.uv = uvs;
+            skinnedMeshRenderer.sharedMesh.triangles = triangles;
+            skinnedMeshRenderer.sharedMesh.RecalculateNormals();
+            skinnedMeshRenderer.material = material;
+        }
+    }
+
+    public void SwapMaterial(Material material)
+    {
+        if (meshFilterBool)
+        {
+            meshRenderer.material = material;
+        }
+        else
+        {
+            skinnedMeshRenderer.material = material;
+        }
+    }
+
+    public void RevertMaterial()
+    {
+        if (meshFilterBool)
+        {
+            meshRenderer.material = mainMaterial;
+        }
+        else
+        {
+            skinnedMeshRenderer.material = mainMaterial;
         }
     }
     // Update is called once per frame

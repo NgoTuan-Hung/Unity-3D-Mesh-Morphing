@@ -8354,13 +8354,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 518486627270614793}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
+  m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: -0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 543450652803829933}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
 --- !u!1 &7926074114801852439
 GameObject:
   m_ObjectHideFlags: 0
@@ -9160,15 +9160,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81a5699e9b472f74081ac69e4a919941, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mesh1: {fileID: 2870892460789914279}
   mesh2: {fileID: 3469287837739567429}
   meshRenderer2: {fileID: 0}
+  skinnedMeshRenderer2: {fileID: 0}
+  meshFilter2Bool: 0
   myMeshStructure: {fileID: 0}
   triangle1TravelDistance: 0.5
   morphMaterial: {fileID: 2100000, guid: c03ffe2b22868754588ba7c7a2b17a43, type: 2}
-  normalMaterial: {fileID: 2100000, guid: 13e9b5c9adcbfc2478b7696a63c370e5, type: 2}
+  targetMaterial: {fileID: 2100000, guid: ccff49a7c5541a44987b420497dc9bb7, type: 2}
+  targetTexture: {fileID: 0}
   baseCoordinateObject: {fileID: 950373869}
-  meshRenderer: {fileID: 0}
   gameObjectCheckingForPrepareMorphing: {fileID: 0}
 --- !u!114 &8808368708231337185
 MonoBehaviour:
@@ -9196,8 +9197,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   realMorph: {fileID: 0}
   myMeshStructure: {fileID: 0}
-  crossBow1: {fileID: 660502426601992089}
-  crossBow2: {fileID: 682731252239002866}
   morphToGameObjects:
   - {fileID: 2452398803584792214}
   - {fileID: 919132147824172122}

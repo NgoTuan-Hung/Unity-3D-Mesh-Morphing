@@ -6,11 +6,10 @@ using Debug = UnityEngine.Debug;
 
 public class RealMorph : MonoBehaviour
 {
-    public MeshFilter mesh1;
     public MeshFilter mesh2;
     public MeshRenderer meshRenderer2;
     public SkinnedMeshRenderer skinnedMeshRenderer2;
-    public bool meshRenderer2Bool = false;
+    public bool meshFilter2Bool = false;
     public MyMeshStructure myMeshStructure;
     private Vector3[] vertices1;
     private Vector3[] vertices2;
@@ -25,15 +24,13 @@ public class RealMorph : MonoBehaviour
     public float triangle1TravelDistance = 0.5f;
     private ComputeBuffer computeBuffer;
     public Material morphMaterial;
-    public Material normalMaterial;
+    public Material targetMaterial;
+    public Texture targetTexture;
     public GameObject baseCoordinateObject;
-    public MeshRenderer meshRenderer;
     // Start is called before the first frame update
     void Awake()
     {
-        mesh1 = GetComponent<MeshFilter>();
         myMeshStructure = GetComponent<MyMeshStructure>();
-        meshRenderer = GetComponent<MeshRenderer>();
     }
 
     void Start()
@@ -43,7 +40,7 @@ public class RealMorph : MonoBehaviour
 
     public int PrepareMorphing(GameObject gameObject)
     {
-        meshRenderer2Bool = false;
+        meshFilter2Bool = false;
         if ((mesh2 = gameObject.GetComponent<MeshFilter>()) == null)
         {
             if ((mesh2 = gameObject.GetComponentInChildren<MeshFilter>()) == null)
@@ -53,13 +50,14 @@ public class RealMorph : MonoBehaviour
                     skinnedMeshRenderer2 = gameObject.GetComponentInChildren<SkinnedMeshRenderer>();
                 }
             }
-            else meshRenderer2Bool = true;
+            else meshFilter2Bool = true;
         }
-        else meshRenderer2Bool = true;
+        else meshFilter2Bool = true;
 
-        if (meshRenderer2Bool)
+        if (meshFilter2Bool)
         {
             meshRenderer2 = gameObject.GetComponent<MeshRenderer>();
+            targetTexture = meshRenderer2.material.mainTexture;
             vertices2 = mesh2.mesh.vertices;
             uv2 = mesh2.mesh.uv;
             normals2 = mesh2.mesh.normals;
@@ -67,19 +65,23 @@ public class RealMorph : MonoBehaviour
         }
         else
         {
+            targetTexture = skinnedMeshRenderer2.material.mainTexture;
             vertices2 = mesh2.sharedMesh.vertices;
             uv2 = mesh2.sharedMesh.uv;
             normals2 = mesh2.sharedMesh.normals;
             triangles2 = mesh2.sharedMesh.triangles;
         }
-        
+        morphMaterial.SetTexture("_MorphTex", targetTexture);
+        targetMaterial.SetTexture("_MainTex", targetTexture);
+
         triangles2MidPoint = new Vector3[triangles2.Length / 3];
         triangles2MidPointHandled = new bool[triangles2MidPoint.Length];
         for (int i = 0; i < triangles2MidPointHandled.Length; i++) triangles2MidPointHandled[i] = false;
-        vertices1 = mesh1.mesh.vertices;
-        triangles1 = mesh1.mesh.triangles;
-        morphMaterial.SetTexture("_MorphTex", meshRenderer.material.mainTexture);
+        vertices1 = myMeshStructure.BasePositions;
+        triangles1 = myMeshStructure.BaseTriangles;
+
         int equality1 = 0;
+
         if (triangles1.Length > triangles2.Length)
         {
             myMeshStructure.MeshDecimatingVertexMerging(triangles2.Length / 3);
@@ -116,9 +118,8 @@ public class RealMorph : MonoBehaviour
         if (triangles1.Length == triangles2.Length)
         {
             myMeshStructure.SwapMesh(equality);
-            // morphMaterial.SetFloat("_Triangle1TravelDistance", triangle1TravelDistance);
             morphMaterial.SetFloat("_TimeOffset", Time.timeSinceLevelLoad);
-            meshRenderer.material = morphMaterial;
+            myMeshStructure.SwapMaterial(morphMaterial);
         }
         else return;
     }
@@ -126,7 +127,7 @@ public class RealMorph : MonoBehaviour
     public void ResetMorphing()
     {
         myMeshStructure.ResetMesh();
-        meshRenderer.material = normalMaterial;
+        myMeshStructure.RevertMaterial();
     }
 
     public void CalculateMidPointOfTriangle2()
