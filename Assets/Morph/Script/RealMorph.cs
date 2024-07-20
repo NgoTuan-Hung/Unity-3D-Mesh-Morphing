@@ -9,6 +9,7 @@ public class RealMorph : MonoBehaviour
     public MeshFilter mesh2;
     public MeshRenderer meshRenderer2;
     public SkinnedMeshRenderer skinnedMeshRenderer2;
+    public Mesh bakedMesh2;
     public bool meshFilter2Bool = false;
     public MyMeshStructure myMeshStructure;
     private Vector3[] vertices1;
@@ -66,10 +67,12 @@ public class RealMorph : MonoBehaviour
         else
         {
             targetTexture = skinnedMeshRenderer2.material.mainTexture;
-            vertices2 = mesh2.sharedMesh.vertices;
-            uv2 = mesh2.sharedMesh.uv;
-            normals2 = mesh2.sharedMesh.normals;
-            triangles2 = mesh2.sharedMesh.triangles;
+            bakedMesh2 = new Mesh();
+            skinnedMeshRenderer2.BakeMesh(bakedMesh2);
+            vertices2 = bakedMesh2.vertices;
+            uv2 = skinnedMeshRenderer2.sharedMesh.uv;
+            normals2 = skinnedMeshRenderer2.sharedMesh.normals;
+            triangles2 = skinnedMeshRenderer2.sharedMesh.triangles;
         }
         morphMaterial.SetTexture("_MorphTex", targetTexture);
         targetMaterial.SetTexture("_MainTex", targetTexture);
@@ -138,22 +141,38 @@ public class RealMorph : MonoBehaviour
         }
     }
 
-    public Matrix4x4 ConstructRotationAndScaleMatrixForMesh2()
+    public Vector3 ConstructCorrectTransformForMesh2(Vector3 vertex)
     {
-        Matrix4x4 matrix4X4 = mesh2.transform.localToWorldMatrix;
-        matrix4X4.SetColumn(3, new Vector4(0, 0, 0, 1));
+        Matrix4x4 matrix4X4;
         Matrix4x4 mesh1RotationMatrix = Matrix4x4.Rotate(baseCoordinateObject.transform.localRotation);
         mesh1RotationMatrix = mesh1RotationMatrix.inverse;
-        return mesh1RotationMatrix * matrix4X4;
+
+        if (meshFilter2Bool) 
+        {
+            matrix4X4 = mesh2.transform.localToWorldMatrix;
+            matrix4X4.SetColumn(3, new Vector4(0, 0, 0, 1));
+            return Vector3.zero;
+        }
+        else 
+        {
+            Matrix4x4 localPos = Matrix4x4.Translate(skinnedMeshRenderer2.transform.localPosition);
+            Debug.Log("Local Pos: " + localPos);
+            Matrix4x4 localRot = Matrix4x4.Rotate(skinnedMeshRenderer2.transform.localRotation);
+            Debug.Log("Local Rot: " + localRot);
+            matrix4X4 = skinnedMeshRenderer2.localToWorldMatrix;
+            matrix4X4.SetColumn(3, new Vector4(0, 0, 0, 1));
+            Debug.Log("Local to World: " + matrix4X4);
+
+            return mesh1RotationMatrix.MultiplyPoint3x4(localRot.inverse.MultiplyPoint3x4(localPos.inverse.MultiplyPoint3x4(matrix4X4.MultiplyPoint3x4(vertex))));   
+        }
     }
 
     public void Mesh2PositionCorrecting()
     {
         vertices2AfterScalingAndRotating = new Vector3[vertices2.Length];
-        Matrix4x4 matrix4X4 = ConstructRotationAndScaleMatrixForMesh2();
         for (int i = 0; i < vertices2.Length; i++)
         {
-            vertices2AfterScalingAndRotating[i] = matrix4X4.MultiplyPoint3x4(vertices2[i]);
+            vertices2AfterScalingAndRotating[i] = ConstructCorrectTransformForMesh2(vertices2[i]);
         }
     }
 
