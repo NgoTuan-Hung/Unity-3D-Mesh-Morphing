@@ -10,6 +10,11 @@ public class MyMeshStructure : MonoBehaviour
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
     private SkinnedMeshRenderer skinnedMeshRenderer;
+    private Mesh bakedMesh;
+    private Vector3[] bakedPosition;
+    private Vector3[] bakedNormals;
+    private Vector2[] bakedUVs;
+    private int[] bakedTriangles;
     private bool meshFilterBool = false;
     private Vector3[] basePositions;
     private Vector3[] baseNormals;
@@ -45,6 +50,7 @@ public class MyMeshStructure : MonoBehaviour
     public int[] RefinedTriangles { get => refinedTriangles; set => refinedTriangles = value; }
     public MeshRenderer MeshRenderer { get => meshRenderer; set => meshRenderer = value; }
     public Material MainMaterial { get => mainMaterial; set => mainMaterial = value; }
+    public Mesh BakedMesh { get => bakedMesh; set => bakedMesh = value; }
 
     // Start is called before the first frame update
     void Awake()
@@ -105,18 +111,40 @@ public class MyMeshStructure : MonoBehaviour
             skinnedMeshRenderer.sharedMesh.triangles = baseTriangles;
         }
     }
-    public void GenerateMeshStructure()
+    public void GenerateMeshStructure(bool baked)
     {
         verticesData = new List<Vertex>();
         trianglesData = new List<Triangle>();
-        for (int i = 0; i < basePositions.Length; i++)
+        if (baked)
         {
-            Vertex vertex = new Vertex();
-            vertex.position = basePositions[i];
-            vertex.normal = baseNormals[i];
-            vertex.uv = baseUVs[i];
-            verticesData.Add(vertex);
+            Stopwatch stopwatch = new Stopwatch();
+            bakedMesh = new Mesh();
+            skinnedMeshRenderer.BakeMesh(bakedMesh);
+            bakedMesh.vertices.CopyTo(bakedPosition = new Vector3[bakedMesh.vertices.Length], 0);
+            
+            stopwatch.Start();
+            for (int i = 0; i < basePositions.Length; i++)
+            {
+                Vertex vertex = new Vertex();
+                vertex.position = bakedPosition[i];
+                vertex.normal = baseNormals[i];
+                vertex.uv = baseUVs[i];
+                verticesData.Add(vertex);
+            }
         }
+        else
+        {
+            for (int i = 0; i < basePositions.Length; i++)
+            {
+                Vertex vertex = new Vertex();
+                vertex.position = basePositions[i];
+                vertex.normal = baseNormals[i];
+                vertex.uv = baseUVs[i];
+                verticesData.Add(vertex);
+            }
+        }
+        
+
         int ipj;
         for (int i = 0; i < baseTriangles.Length; i += 3)
         {
@@ -130,12 +158,13 @@ public class MyMeshStructure : MonoBehaviour
             }
             trianglesData.Add(triangle);
         }
+        
     }
-    public void MeshDecimatingVertexMerging(int faceCount)
+    public void MeshDecimatingVertexMerging(int faceCount, bool baked)
     {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
-        GenerateMeshStructure();
+        GenerateMeshStructure(baked);
         Debug.Log("Current Face Count: " + trianglesData.Count);
         Vertex vcore, ncore;
         List<Triangle> unhandledTriangles, removedTriangles, filteredTriangles;
@@ -258,11 +287,11 @@ public class MyMeshStructure : MonoBehaviour
         stopwatch.Stop();
         Debug.Log("Time taken to decimate mesh: " + stopwatch.ElapsedMilliseconds + " ms");
     }
-    public void MeshRefiningTriangleSplitting(int faceCount)
+    public void MeshRefiningTriangleSplitting(int faceCount, bool baked)
     {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
-        GenerateMeshStructure();
+        GenerateMeshStructure(baked);
         Debug.Log("Current Face Count: " + trianglesData.Count);
         Vertex vcore, ncore;
         Triangle tempTriangle;

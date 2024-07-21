@@ -14,32 +14,25 @@ class TestScript : MonoBehaviour
     private void Awake() 
     {
         realMorph = GetComponent<RealMorph>();
-        myMeshStructure = GetComponent<MyMeshStructure>();
     }
 
     private void Update() 
     {
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            realMorph.StartMorphing(morphToGameObject);
-            StartCoroutine(TrickSwapMesh());
+            realMorph.StartMorphing();
         }
 
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            realMorph.ResetMorphing();
-        }
+        // if (Input.GetKeyDown(KeyCode.Alpha2))
+        // {
+        //     realMorph.ResetMorphing();
+        // }
 
-        if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            morphToGameObject = morphToGameObjects[++currentMorphIndex % morphToGameObjects.Count];
-        }
+        // if (Input.GetKeyDown(KeyCode.Alpha3))
+        // {
+        //     morphToGameObject = morphToGameObjects[++currentMorphIndex % morphToGameObjects.Count];
+        // }
     }
 
-    IEnumerator TrickSwapMesh()
-    {
-        yield return new WaitForSeconds(2);
-
-        myMeshStructure.TrickSwapMesh(realMorph.Vertices2AfterScalingAndRotating, realMorph.Uv2, realMorph.Triangles2, realMorph.targetMaterial);
-    }
+    
 }

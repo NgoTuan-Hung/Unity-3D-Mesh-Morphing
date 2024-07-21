@@ -6,32 +6,35 @@ using Debug = UnityEngine.Debug;
 
 public class RealMorph : MonoBehaviour
 {
-    public MeshFilter mesh2;
-    public MeshRenderer meshRenderer2;
-    public SkinnedMeshRenderer skinnedMeshRenderer2;
-    public Mesh bakedMesh2;
-    public bool meshFilter2Bool = false;
-    public MyMeshStructure myMeshStructure;
-    private Vector3[] vertices1;
-    private Vector3[] vertices2;
-    private Vector3[] vertices2AfterScalingAndRotating;
-    private Vector2[] uv2;
-    private Vector3[] normals1;
-    private Vector3[] normals2;
-    private int[] triangles1;
-    private int[] triangles2;
-    private Vector3[] triangles2MidPoint;
-    private bool[] triangles2MidPointHandled;
+    public GameObject sourceObject;
+    public GameObject targetObject;
+    public MyMeshStructure sourceMeshStructure;
+    public MyMeshStructure targetMeshStructure;
+    public SkinnedMeshRenderer morphSkinnedMeshRenderer;
+    public Mesh sourceBakedMesh;
+    public Mesh targetBakedMesh;
+    private Vector3[] sourceVertices;
+    private Vector3[] targetVertices;
+    private Vector3[] sourceCorrectPosition;
+    private Vector3[] targetCorrectPosition;
+    private Vector2[] sourceUVs;
+    private Vector2[] targetUVs;
+    private Vector3[] sourceNormals;
+    private Vector3[] targetNormals;
+    private int[] sourceTriangles;
+    private int[] targetTriangles;
     public float triangle1TravelDistance = 0.5f;
     private ComputeBuffer computeBuffer;
     public Material morphMaterial;
     public Material targetMaterial;
-    public Texture targetTexture;
-    public GameObject baseCoordinateObject;
     // Start is called before the first frame update
     void Awake()
     {
-        myMeshStructure = GetComponent<MyMeshStructure>();
+        morphSkinnedMeshRenderer = GetComponentInChildren<SkinnedMeshRenderer>();
+        sourceMeshStructure = sourceObject.GetComponentInChildren<MyMeshStructure>();
+        targetMeshStructure = targetObject.GetComponentInChildren<MyMeshStructure>();
+        sourceBakedMesh = new Mesh();
+        targetBakedMesh = new Mesh();
     }
 
     void Start()
@@ -39,156 +42,112 @@ public class RealMorph : MonoBehaviour
         
     }
 
-    public int PrepareMorphing(GameObject gameObject)
+    public void PrepareMorphing()
     {
-        meshFilter2Bool = false;
-        if ((mesh2 = gameObject.GetComponent<MeshFilter>()) == null)
-        {
-            if ((mesh2 = gameObject.GetComponentInChildren<MeshFilter>()) == null)
-            {
-                if ((skinnedMeshRenderer2 = gameObject.GetComponent<SkinnedMeshRenderer>()) == null)
-                {
-                    skinnedMeshRenderer2 = gameObject.GetComponentInChildren<SkinnedMeshRenderer>();
-                }
-            }
-            else meshFilter2Bool = true;
-        }
-        else meshFilter2Bool = true;
+        targetBakedMesh = new Mesh();
+        morphMaterial.SetTexture("_MainTex", sourceMeshStructure.MainMaterial.mainTexture);
+        morphMaterial.SetTexture("_MorphTex", targetMeshStructure.MainMaterial.mainTexture);
+        // targetMaterial = targetMeshStructure.MainMaterial;
+        targetMaterial.SetTexture("_MainTex", targetMeshStructure.MainMaterial.mainTexture);
+        sourceVertices = sourceMeshStructure.BasePositions;
+        sourceTriangles = sourceMeshStructure.BaseTriangles;
+        
 
-        if (meshFilter2Bool)
+        if (targetMeshStructure.MeshFilterBool)
         {
-            meshRenderer2 = gameObject.GetComponent<MeshRenderer>();
-            targetTexture = meshRenderer2.material.mainTexture;
-            vertices2 = mesh2.mesh.vertices;
-            uv2 = mesh2.mesh.uv;
-            normals2 = mesh2.mesh.normals;
-            triangles2 = mesh2.mesh.triangles;
+            targetVertices = targetMeshStructure.BasePositions;
+            targetUVs = targetMeshStructure.BaseUVs;
+            targetNormals = targetMeshStructure.BaseNormals;
+            targetTriangles = targetMeshStructure.BaseTriangles;
         }
         else
         {
-            targetTexture = skinnedMeshRenderer2.material.mainTexture;
-            bakedMesh2 = new Mesh();
-            skinnedMeshRenderer2.BakeMesh(bakedMesh2);
-            vertices2 = bakedMesh2.vertices;
-            uv2 = skinnedMeshRenderer2.sharedMesh.uv;
-            normals2 = skinnedMeshRenderer2.sharedMesh.normals;
-            triangles2 = skinnedMeshRenderer2.sharedMesh.triangles;
+            targetMeshStructure.SkinnedMeshRenderer.BakeMesh(targetBakedMesh);
+            targetVertices = targetBakedMesh.vertices;
+            targetUVs = targetMeshStructure.BaseUVs;
+            targetNormals = targetMeshStructure.BaseNormals;
+            targetTriangles = targetMeshStructure.BaseTriangles;
         }
-        morphMaterial.SetTexture("_MorphTex", targetTexture);
-        targetMaterial.SetTexture("_MainTex", targetTexture);
 
-        triangles2MidPoint = new Vector3[triangles2.Length / 3];
-        triangles2MidPointHandled = new bool[triangles2MidPoint.Length];
-        for (int i = 0; i < triangles2MidPointHandled.Length; i++) triangles2MidPointHandled[i] = false;
-        vertices1 = myMeshStructure.BasePositions;
-        triangles1 = myMeshStructure.BaseTriangles;
-
-        int equality1 = 0;
-
-        if (triangles1.Length > triangles2.Length)
+        if (sourceTriangles.Length > targetTriangles.Length)
         {
-            myMeshStructure.MeshDecimatingVertexMerging(triangles2.Length / 3);
-            vertices1 = myMeshStructure.DecimatedPositions;
-            normals1 = myMeshStructure.DecimatedNormals;
-            triangles1 = myMeshStructure.DecimatedTriangles;
-            equality1 = 1;
+            if (sourceMeshStructure.MeshFilterBool) sourceMeshStructure.MeshDecimatingVertexMerging(targetTriangles.Length / 3, false);
+            else sourceMeshStructure.MeshDecimatingVertexMerging(targetTriangles.Length / 3, true);
+
+            sourceVertices = sourceMeshStructure.DecimatedPositions;
+            sourceUVs = sourceMeshStructure.DecimatedUVs;
+            sourceNormals = sourceMeshStructure.DecimatedNormals;
+            sourceTriangles = sourceMeshStructure.DecimatedTriangles;
         }
-        else if (triangles1.Length < triangles2.Length)
+        else if (sourceTriangles.Length < targetTriangles.Length)
         {
-            myMeshStructure.MeshRefiningTriangleSplitting(triangles2.Length / 3);
-            vertices1 = myMeshStructure.RefinedPositions;
-            normals1 = myMeshStructure.RefinedNormals;
-            triangles1 = myMeshStructure.RefinedTriangles;
-            equality1 = -1;
+            if (sourceMeshStructure.MeshFilterBool) sourceMeshStructure.MeshRefiningTriangleSplitting(targetTriangles.Length / 3, false);
+            else sourceMeshStructure.MeshRefiningTriangleSplitting(targetTriangles.Length / 3, true);
+
+            sourceVertices = sourceMeshStructure.RefinedPositions;
+            sourceUVs = sourceMeshStructure.RefinedUVs;
+            sourceNormals = sourceMeshStructure.RefinedNormals;
+            sourceTriangles = sourceMeshStructure.RefinedTriangles;
         }
         
-        Mesh2PositionCorrecting();
-        CalculateMidPointOfTriangle2();
+        MeshPositionCorrecting();
         StoreDataForEachTriangle();
-        return equality1;
     }
 
-    public GameObject gameObjectCheckingForPrepareMorphing;
-    int equality = 0;
-    public void StartMorphing(GameObject gameObject)
+    public void StartMorphing()
     {
-        if (gameObject != gameObjectCheckingForPrepareMorphing)
-        {
-            equality = PrepareMorphing(gameObject);
-            gameObjectCheckingForPrepareMorphing = gameObject;
-        }
+        PrepareMorphing();
 
-        if (triangles1.Length == triangles2.Length)
-        {
-            myMeshStructure.SwapMesh(equality);
-            morphMaterial.SetFloat("_TimeOffset", Time.timeSinceLevelLoad);
-            myMeshStructure.SwapMaterial(morphMaterial);
-        }
-        else return;
+        morphMaterial.SetFloat("_TimeOffset", Time.timeSinceLevelLoad);
+        morphSkinnedMeshRenderer.sharedMesh = new Mesh();
+        morphSkinnedMeshRenderer.sharedMesh.SetVertices(sourceCorrectPosition);
+        morphSkinnedMeshRenderer.sharedMesh.SetUVs(0, sourceUVs);
+        morphSkinnedMeshRenderer.sharedMesh.SetNormals(sourceNormals);
+        morphSkinnedMeshRenderer.sharedMesh.SetTriangles(sourceTriangles, 0);
+
+        morphSkinnedMeshRenderer.material = morphMaterial;
+
+        StartCoroutine(TrickSwapMesh());
     }
 
-    public void ResetMorphing()
+    IEnumerator TrickSwapMesh()
     {
-        myMeshStructure.ResetMesh();
-        myMeshStructure.RevertMaterial();
+        yield return new WaitForSeconds(2);
+
+        morphSkinnedMeshRenderer.sharedMesh.Clear();
+        morphSkinnedMeshRenderer.sharedMesh.SetVertices(targetCorrectPosition);
+        morphSkinnedMeshRenderer.sharedMesh.SetUVs(0, targetUVs);
+        morphSkinnedMeshRenderer.sharedMesh.SetNormals(targetNormals);
+        morphSkinnedMeshRenderer.sharedMesh.SetTriangles(targetTriangles, 0);
+
+        morphSkinnedMeshRenderer.material = targetMaterial;
     }
 
-    public void CalculateMidPointOfTriangle2()
-    {
-        for (int i = 0; i < triangles2.Length; i += 3)
-        {
-            triangles2MidPoint[i / 3] = (vertices2[triangles2[i]] + vertices2[triangles2[i + 1]] + vertices2[triangles2[i + 2]]) / 3;
-        }
-    }
-
-    public Matrix4x4 ConstructCorrectTransformForMesh2()
+    public void MeshPositionCorrecting()
     {
         Matrix4x4 matrix4X4;
-        Matrix4x4 mesh1RotationMatrix = Matrix4x4.Rotate(baseCoordinateObject.transform.localRotation);
-        mesh1RotationMatrix = mesh1RotationMatrix.inverse;
+        sourceCorrectPosition = new Vector3[sourceVertices.Length];
+        if (sourceMeshStructure.MeshFilterBool) matrix4X4 = sourceMeshStructure.MeshFilter.transform.localToWorldMatrix;
+        else matrix4X4 = sourceMeshStructure.SkinnedMeshRenderer.localToWorldMatrix;
+        matrix4X4.SetColumn(3, new Vector4(0, 0, 0, 1));
 
-        if (meshFilter2Bool) 
+        for (int i = 0; i < sourceVertices.Length; i++)
         {
-            matrix4X4 = mesh2.transform.localToWorldMatrix;
-            matrix4X4.SetColumn(3, new Vector4(0, 0, 0, 1));
-
-            return mesh1RotationMatrix * matrix4X4;
+            sourceCorrectPosition[i] = matrix4X4.MultiplyPoint3x4(sourceVertices[i]);
         }
-        else 
-        {
-            Matrix4x4 localPos = Matrix4x4.Translate(skinnedMeshRenderer2.transform.localPosition);
-            Matrix4x4 localRot = Matrix4x4.Rotate(skinnedMeshRenderer2.transform.localRotation);
-            matrix4X4 = skinnedMeshRenderer2.transform.localToWorldMatrix;
-            matrix4X4.SetColumn(3, new Vector4(0, 0, 0, 1));
 
-            // return mesh1RotationMatrix;
-            // return Matrix4x4.identity;
-            return mesh1RotationMatrix * matrix4X4;
-        }
-    }
+        targetCorrectPosition = new Vector3[targetVertices.Length];
+        if (targetMeshStructure.MeshFilterBool) matrix4X4 = targetMeshStructure.MeshFilter.transform.localToWorldMatrix;
+        else matrix4X4 = targetMeshStructure.SkinnedMeshRenderer.localToWorldMatrix;
+        matrix4X4.SetColumn(3, new Vector4(0, 0, 0, 1));
 
-    public void Mesh2PositionCorrecting()
-    {
-        vertices2AfterScalingAndRotating = new Vector3[vertices2.Length];
-        Matrix4x4 matrix4X4 = ConstructCorrectTransformForMesh2();
-        var test = Vector3.zero;
-        for (int i = 0; i < vertices2.Length; i++)
+        for (int i = 0; i < targetVertices.Length; i++)
         {
-            test = matrix4X4.MultiplyPoint3x4(vertices2[i]);
-            vertices2AfterScalingAndRotating[i] = test;
+            targetCorrectPosition[i] = matrix4X4.MultiplyPoint3x4(targetVertices[i]);
         }
     }
 
     public List<PerTriangleData> perTriangleDatas = new List<PerTriangleData>();
-    public Vector3[] Vertices1 { get => vertices1; set => vertices1 = value; }
-    public Vector3[] Vertices2 { get => vertices2; set => vertices2 = value; }
-    public Vector3[] Vertices2AfterScalingAndRotating { get => vertices2AfterScalingAndRotating; set => vertices2AfterScalingAndRotating = value; }
-    public Vector2[] Uv2 { get => uv2; set => uv2 = value; }
-    public int[] Triangles1 { get => triangles1; set => triangles1 = value; }
-    public int[] Triangles2 { get => triangles2; set => triangles2 = value; }
-    public Vector3[] Triangles2MidPoint { get => triangles2MidPoint; set => triangles2MidPoint = value; }
-    public bool[] Triangles2MidPointHandled { get => triangles2MidPointHandled; set => triangles2MidPointHandled = value; }
-    public Vector3[] Normals2 { get => normals2; set => normals2 = value; }
 
     public void StoreDataForEachTriangle()
     {
@@ -198,10 +157,10 @@ public class RealMorph : MonoBehaviour
         Vector3 tempNormal, tempDirection;
         perTriangleDatas.Clear();
         int ip1, ip2;
-        for (int i=0;i<triangles1.Length;i+=3)
+        for (int i=0;i<sourceTriangles.Length;i+=3)
         {
             ip1 = i + 1; ip2 = i + 2;
-            tempNormal = Vector3.Cross(vertices1[triangles1[ip1]] - vertices1[triangles1[i]], vertices1[triangles1[ip2]] - vertices1[triangles1[i]]);
+            tempNormal = Vector3.Cross(sourceVertices[sourceTriangles[ip1]] - sourceVertices[sourceTriangles[i]], sourceVertices[sourceTriangles[ip2]] - sourceVertices[sourceTriangles[i]]);
             tempNormal = tempNormal == Vector3.zero ? new Vector3(Random.Range(0.1f, 1f), Random.Range(0.1f, 1f), Random.Range(0.1f, 1f)) : tempNormal;
             tempDirection = tempNormal.normalized * triangle1TravelDistance;
 
@@ -209,19 +168,19 @@ public class RealMorph : MonoBehaviour
             (
                 new PerTriangleData
                 (
-                    vertices2AfterScalingAndRotating[triangles2[i]],
-                    vertices2AfterScalingAndRotating[triangles2[ip1]],
-                    vertices2AfterScalingAndRotating[triangles2[ip2]],
-                    uv2[triangles2[i]],
-                    uv2[triangles2[ip1]],
-                    uv2[triangles2[ip2]],
-                    normals2[triangles2[i]],
-                    normals2[triangles2[ip1]],
-                    normals2[triangles2[ip2]],
+                    targetCorrectPosition[targetTriangles[i]],
+                    targetCorrectPosition[targetTriangles[ip1]],
+                    targetCorrectPosition[targetTriangles[ip2]],
+                    targetUVs[targetTriangles[i]],
+                    targetUVs[targetTriangles[ip1]],
+                    targetUVs[targetTriangles[ip2]],
+                    targetNormals[targetTriangles[i]],
+                    targetNormals[targetTriangles[ip1]],
+                    targetNormals[targetTriangles[ip2]],
                     tempDirection,
-                    vertices1[triangles1[i]] + tempDirection,
-                    vertices1[triangles1[ip1]] + tempDirection,
-                    vertices1[triangles1[ip2]] + tempDirection
+                    sourceVertices[sourceTriangles[i]] + tempDirection,
+                    sourceVertices[sourceTriangles[ip1]] + tempDirection,
+                    sourceVertices[sourceTriangles[ip2]] + tempDirection
                 )
             );
         }
