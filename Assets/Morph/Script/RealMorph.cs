@@ -141,7 +141,7 @@ public class RealMorph : MonoBehaviour
         }
     }
 
-    public Vector3 ConstructCorrectTransformForMesh2(Vector3 vertex)
+    public Matrix4x4 ConstructCorrectTransformForMesh2()
     {
         Matrix4x4 matrix4X4;
         Matrix4x4 mesh1RotationMatrix = Matrix4x4.Rotate(baseCoordinateObject.transform.localRotation);
@@ -151,28 +151,31 @@ public class RealMorph : MonoBehaviour
         {
             matrix4X4 = mesh2.transform.localToWorldMatrix;
             matrix4X4.SetColumn(3, new Vector4(0, 0, 0, 1));
-            return Vector3.zero;
+
+            return mesh1RotationMatrix * matrix4X4;
         }
         else 
         {
             Matrix4x4 localPos = Matrix4x4.Translate(skinnedMeshRenderer2.transform.localPosition);
-            Debug.Log("Local Pos: " + localPos);
             Matrix4x4 localRot = Matrix4x4.Rotate(skinnedMeshRenderer2.transform.localRotation);
-            Debug.Log("Local Rot: " + localRot);
-            matrix4X4 = skinnedMeshRenderer2.localToWorldMatrix;
+            matrix4X4 = skinnedMeshRenderer2.transform.localToWorldMatrix;
             matrix4X4.SetColumn(3, new Vector4(0, 0, 0, 1));
-            Debug.Log("Local to World: " + matrix4X4);
 
-            return mesh1RotationMatrix.MultiplyPoint3x4(localRot.inverse.MultiplyPoint3x4(localPos.inverse.MultiplyPoint3x4(matrix4X4.MultiplyPoint3x4(vertex))));   
+            // return mesh1RotationMatrix;
+            // return Matrix4x4.identity;
+            return mesh1RotationMatrix * matrix4X4;
         }
     }
 
     public void Mesh2PositionCorrecting()
     {
         vertices2AfterScalingAndRotating = new Vector3[vertices2.Length];
+        Matrix4x4 matrix4X4 = ConstructCorrectTransformForMesh2();
+        var test = Vector3.zero;
         for (int i = 0; i < vertices2.Length; i++)
         {
-            vertices2AfterScalingAndRotating[i] = ConstructCorrectTransformForMesh2(vertices2[i]);
+            test = matrix4X4.MultiplyPoint3x4(vertices2[i]);
+            vertices2AfterScalingAndRotating[i] = test;
         }
     }
 
@@ -189,7 +192,7 @@ public class RealMorph : MonoBehaviour
 
     public void StoreDataForEachTriangle()
     {
-        computeBuffer?.Release();
+        computeBuffer?.Dispose();
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
         Vector3 tempNormal, tempDirection;

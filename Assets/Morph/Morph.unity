@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.1867303, g: 0.24514982, b: 0.34575927, a: 1}
+  m_IndirectSpecularColor: {r: 0.18673027, g: 0.24514982, b: 0.34575927, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -248,7 +248,6 @@ Transform:
   m_Children:
   - {fileID: 5012850822446524099}
   - {fileID: 3587946162740830664}
-  - {fileID: 8808368708231337183}
   m_Father: {fileID: 4879362907145788861}
   m_LocalEulerAnglesHint: {x: 0, y: -207.69, z: 0}
 --- !u!1 &1273076941
@@ -8376,13 +8375,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 518486627270614793}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 2, z: 0}
+  m_LocalRotation: {x: 0, y: 0.38268343, z: 0, w: 0.92387956}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 543450652803829933}
-  m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 45, z: 0}
 --- !u!1 &7926074114801852439
 GameObject:
   m_ObjectHideFlags: 0
@@ -9163,13 +9162,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5792829022008627503}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: -0.09, y: 3.644, z: -19.339}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 950373870}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!114 &8808368708231337184
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9587,6 +9586,7 @@ SceneRoots:
   - {fileID: 2774916643058282660}
   - {fileID: 988290653172901370}
   - {fileID: 1273076943}
+  - {fileID: 8808368708231337183}
   - {fileID: 4879362907145788861}
   - {fileID: 5312381281138938581}
   - {fileID: 1335408674}

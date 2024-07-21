@@ -40,6 +40,7 @@ public class SkinnedMeshTest : MonoBehaviour
         {
             // meshFilters[i].mesh.Clear();
             skinnedMeshRenderers[i].BakeMesh(meshFilters[i].mesh);
+            // skinnedMeshRenderers[i].
         }
     }
 }
