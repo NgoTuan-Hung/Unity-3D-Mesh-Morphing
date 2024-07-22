@@ -119,7 +119,7 @@ public class MyMeshStructure : MonoBehaviour
         {
             Stopwatch stopwatch = new Stopwatch();
             bakedMesh = new Mesh();
-            skinnedMeshRenderer.BakeMesh(bakedMesh);
+            skinnedMeshRenderer.BakeMesh(bakedMesh, true);
             bakedMesh.vertices.CopyTo(bakedPosition = new Vector3[bakedMesh.vertices.Length], 0);
             
             stopwatch.Start();
