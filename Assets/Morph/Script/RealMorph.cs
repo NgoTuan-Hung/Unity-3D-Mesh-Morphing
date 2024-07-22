@@ -24,6 +24,7 @@ public class RealMorph : MonoBehaviour
     private int[] sourceTriangles;
     private int[] targetTriangles;
     public float triangle1TravelDistance = 0.5f;
+    [SerializeField] private float morphTime = 1f;
     private ComputeBuffer computeBuffer;
     public Material morphMaterial;
     public Material targetMaterial;
@@ -47,6 +48,7 @@ public class RealMorph : MonoBehaviour
         targetBakedMesh = new Mesh();
         morphMaterial.SetTexture("_MainTex", sourceMeshStructure.MainMaterial.mainTexture);
         morphMaterial.SetTexture("_MorphTex", targetMeshStructure.MainMaterial.mainTexture);
+        morphMaterial.SetFloat("_TimeScale", 2 / morphTime);
         // targetMaterial = targetMeshStructure.MainMaterial;
         targetMaterial.SetTexture("_MainTex", targetMeshStructure.MainMaterial.mainTexture);
         sourceVertices = sourceMeshStructure.BasePositions;
@@ -112,7 +114,7 @@ public class RealMorph : MonoBehaviour
 
     IEnumerator TrickSwapMesh()
     {
-        yield return new WaitForSeconds(2);
+        yield return new WaitForSeconds(morphTime);
 
         morphSkinnedMeshRenderer.sharedMesh.Clear();
         morphSkinnedMeshRenderer.sharedMesh.SetVertices(targetCorrectPosition);

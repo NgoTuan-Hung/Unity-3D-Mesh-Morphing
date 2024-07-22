@@ -1,4 +1,4 @@
-Shader "Unlit/RealMorph"
+Shader "Custom/RealMorph"
 {
     Properties
     {

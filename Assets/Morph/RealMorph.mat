@@ -82,8 +82,8 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _TimeOffset: 0.2498463
-    - _TimeScale: 1
+    - _TimeOffset: 0.7334955
+    - _TimeScale: 0.6666667
     - _Triangle1TravelDistance: 2000
     - _TriangleTravelDistance: 0
     - _UVSec: 0
