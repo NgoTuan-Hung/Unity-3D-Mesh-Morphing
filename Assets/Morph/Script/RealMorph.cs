@@ -158,7 +158,7 @@ public class RealMorph : MonoBehaviour
 
     public void StoreDataForEachTriangle()
     {
-        computeBuffer?.Dispose();
+        computeBuffer?.Release();
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
         perTriangleDatas.Clear();

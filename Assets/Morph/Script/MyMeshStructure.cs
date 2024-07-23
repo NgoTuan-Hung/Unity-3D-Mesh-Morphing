@@ -92,25 +92,6 @@ public class MyMeshStructure : MonoBehaviour
             }
         }
     }
-    public void ResetMesh()
-    {
-        if (meshFilterBool)
-        {
-            meshFilter.mesh.Clear(false);
-            meshFilter.mesh.vertices = basePositions;
-            meshFilter.mesh.normals = baseNormals;
-            meshFilter.mesh.uv = baseUVs;
-            meshFilter.mesh.triangles = baseTriangles;
-        }
-        else
-        {
-            skinnedMeshRenderer.sharedMesh.Clear(false);
-            skinnedMeshRenderer.sharedMesh.vertices = basePositions;
-            skinnedMeshRenderer.sharedMesh.normals = baseNormals;
-            skinnedMeshRenderer.sharedMesh.uv = baseUVs;
-            skinnedMeshRenderer.sharedMesh.triangles = baseTriangles;
-        }
-    }
     public void GenerateMeshStructure(bool baked)
     {
         verticesData = new List<Vertex>();
@@ -401,98 +382,6 @@ public class MyMeshStructure : MonoBehaviour
 
         stopwatch.Stop();
         Debug.Log("Time taken to refine mesh: " + stopwatch.ElapsedMilliseconds + " ms");
-    }
-    public void SwapMesh(int equality)
-    {
-        if (equality == 1)
-        {
-            if (meshFilterBool)
-            {
-                meshFilter.mesh.Clear(false);
-                meshFilter.mesh.vertices = decimatedPositions;
-                meshFilter.mesh.normals = decimatedNormals;
-                meshFilter.mesh.uv = decimatedUVs;
-                meshFilter.mesh.triangles = decimatedTriangles;
-            }
-            else
-            {
-                skinnedMeshRenderer.sharedMesh.Clear(false);
-                skinnedMeshRenderer.sharedMesh.vertices = decimatedPositions;
-                skinnedMeshRenderer.sharedMesh.normals = decimatedNormals;
-                skinnedMeshRenderer.sharedMesh.uv = decimatedUVs;
-                skinnedMeshRenderer.sharedMesh.triangles = decimatedTriangles;
-            }
-        }
-        else if (equality == -1)
-        {
-            if (meshFilterBool)
-            {
-                meshFilter.mesh.Clear(false);
-                meshFilter.mesh.vertices = refinedPositions;
-                meshFilter.mesh.normals = refinedNormals;
-                meshFilter.mesh.uv = refinedUVs;
-                meshFilter.mesh.triangles = refinedTriangles;
-            }
-            else
-            {
-                skinnedMeshRenderer.sharedMesh.Clear(false);
-                skinnedMeshRenderer.sharedMesh.vertices = refinedPositions;
-                skinnedMeshRenderer.sharedMesh.normals = refinedNormals;
-                skinnedMeshRenderer.sharedMesh.uv = refinedUVs;
-                skinnedMeshRenderer.sharedMesh.triangles = refinedTriangles;
-            }
-        }
-    }
-
-    public void TrickSwapMesh(Vector3[] positions, Vector2[] uvs, int[] triangles, Material material)
-    {
-        if (meshFilterBool)
-        {
-            meshFilter.mesh.Clear(false);
-            meshFilter.mesh.vertices = positions;
-            meshFilter.mesh.uv = uvs;
-            meshFilter.mesh.triangles = triangles;
-            meshFilter.mesh.RecalculateNormals();
-            meshRenderer.material = material;
-        }
-        else
-        {
-            skinnedMeshRenderer.sharedMesh.Clear(false);
-            skinnedMeshRenderer.sharedMesh.vertices = positions;
-            skinnedMeshRenderer.sharedMesh.uv = uvs;
-            skinnedMeshRenderer.sharedMesh.triangles = triangles;
-            skinnedMeshRenderer.sharedMesh.RecalculateNormals();
-            skinnedMeshRenderer.material = material;
-        }
-    }
-
-    public void SwapMaterial(Material material)
-    {
-        if (meshFilterBool)
-        {
-            meshRenderer.material = material;
-        }
-        else
-        {
-            skinnedMeshRenderer.material = material;
-        }
-    }
-
-    public void RevertMaterial()
-    {
-        if (meshFilterBool)
-        {
-            meshRenderer.material = mainMaterial;
-        }
-        else
-        {
-            skinnedMeshRenderer.material = mainMaterial;
-        }
-    }
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }
 public class Vertex

@@ -20,12 +20,6 @@ Shader "Custom/RealMorphV2"
         LOD 100
 
         Pass
-		{
-			ZWrite On
-			ColorMask 0
-		}
-
-        Pass
         {
             CGPROGRAM
             #pragma vertex vert
