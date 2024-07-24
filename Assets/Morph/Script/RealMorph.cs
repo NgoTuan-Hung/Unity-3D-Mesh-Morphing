@@ -65,7 +65,7 @@ public class RealMorph : MonoBehaviour
         }
         else
         {
-            targetMeshStructure.SkinnedMeshRenderer.BakeMesh(targetBakedMesh);
+            targetMeshStructure.SkinnedMeshRenderer.BakeMesh(targetBakedMesh, true);
             targetVertices = targetBakedMesh.vertices;
             targetUVs = targetMeshStructure.BaseUVs;
             targetNormals = targetMeshStructure.BaseNormals;
@@ -84,8 +84,8 @@ public class RealMorph : MonoBehaviour
         }
         else if (sourceTriangles.Length < targetTriangles.Length)
         {
-            if (sourceMeshStructure.MeshFilterBool) sourceMeshStructure.MeshRefiningTriangleSplitting(targetTriangles.Length / 3, false);
-            else sourceMeshStructure.MeshRefiningTriangleSplitting(targetTriangles.Length / 3, true);
+            if (sourceMeshStructure.MeshFilterBool) sourceMeshStructure.MeshRefiningTriangleSplitting(targetTriangles.Length / 3, false, sourceMyGameObject.name);
+            else sourceMeshStructure.MeshRefiningTriangleSplitting(targetTriangles.Length / 3, true, sourceMyGameObject.name);
 
             sourceVertices = sourceMeshStructure.RefinedPositions;
             sourceUVs = sourceMeshStructure.RefinedUVs;

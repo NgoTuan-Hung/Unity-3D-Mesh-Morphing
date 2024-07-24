@@ -588,8 +588,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sourceMeshStructure: {fileID: 0}
   targetMeshStructure: {fileID: 0}
-  sourceMyGameObject: {fileID: 6454159390171136217}
-  targetMyGameObject: {fileID: 919132148884294169}
+  sourceMyGameObject: {fileID: 919132148884294169}
+  targetMyGameObject: {fileID: 6454159390171136217}
   morphSkinnedMeshRenderer: {fileID: 0}
   sourceBakedMesh: {fileID: 0}
   targetBakedMesh: {fileID: 0}
@@ -2020,11 +2020,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   myMeshStructure: {fileID: 0}
-  realMorph: {fileID: 0}
+  realMorph: {fileID: 1821884079}
   animator: {fileID: 0}
   moveVector: {x: 0, y: 0}
   direction: {x: 0, y: 0, z: 0}
-  isPlayable: 0
+  isPlayable: 1
 --- !u!137 &919135345572951279
 SkinnedMeshRenderer:
   m_ObjectHideFlags: 0
@@ -9413,7 +9413,7 @@ GameObject:
   - component: {fileID: 6454159390163759894}
   - component: {fileID: 6454159390171136217}
   m_Layer: 0
-  m_Name: DogPBR
+  m_Name: DogWarrior
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9436,7 +9436,7 @@ MonoBehaviour:
   animator: {fileID: 0}
   moveVector: {x: 0, y: 0}
   direction: {x: 0, y: 0, z: 0}
-  isPlayable: 1
+  isPlayable: 0
 --- !u!1 &6454159390171136218
 GameObject:
   m_ObjectHideFlags: 0

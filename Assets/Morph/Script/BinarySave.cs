@@ -37,21 +37,6 @@ public class BinarySave
     public void Main1()
     {
 
-        // Save to file
-        // SaveToFile("data.bin", vertices, triangles);
-
-        // Load from file
-        
-        // LoadFromFile("data.bin", out loadedVertices, out loadedTriangles);
-
-        // foreach (var triangle in loadedTriangles)
-        // {
-        //     Console.WriteLine($"Triangle {triangle.Id} has vertices:");
-        //     foreach (var vertex in triangle.Vertices)
-        //     {
-        //         Console.WriteLine($"- Vertex {vertex.Id}");
-        //     }
-        // }
     }
 
     public void Serialize(BinaryWriter writer, Vertex vertex)
@@ -80,29 +65,99 @@ public class BinarySave
         writer.Write(triangle.isNull);
     }
 
+    public VertexBinary DeserializeVertex(BinaryReader reader)
+    {
+        VertexBinary vertex = new()
+        {
+            Id = reader.ReadInt32(),
+            IsNull = reader.ReadBoolean(),
+            Changed = reader.ReadBoolean()
+        };
+
+        if (vertex.Changed)
+        {
+            vertex.ChangedDat1 = reader.ReadInt32();
+            vertex.ChangedDat2 = reader.ReadInt32();
+        }
+        return vertex;
+    }
+
+    public VertexBinary DeserializeVertexNew(BinaryReader reader)
+    {
+        VertexBinary vertex = new()
+        {
+            Id = reader.ReadInt32(),
+            IsNull = reader.ReadBoolean(),
+            Changed = reader.ReadBoolean(),
+            NewDat1 = reader.ReadInt32(),
+            NewDat2 = reader.ReadInt32(),
+            NewDat3 = reader.ReadInt32()
+        };
+        return vertex;
+    }
+
+    public TriangleBinary DeserializeTriangle(BinaryReader reader)
+    {
+        TriangleBinary triangle = new()
+        {
+            V1 = reader.ReadInt32(),
+            V2 = reader.ReadInt32(),
+            V3 = reader.ReadInt32(),
+            IsNull = reader.ReadBoolean()
+        };
+        return triangle;
+    }
+
     public void SaveToFile(string filename, List<Vertex> vertices, List<Triangle> triangles)
     {
-        using BinaryWriter writer = new(File.Open(filename, FileMode.Create));
-        
+        BinaryWriter writer = new(File.Open(filename, FileMode.Create));
+
+        writer.Write(vertices.Count);
         vertices.ForEach(vertex => 
         {
             Serialize(writer, vertex);
         });
 
+        writer.Write(triangles.Count);
         triangles.ForEach(triangle => 
         {
             Serialize(writer, triangle);
         });
+
+        writer.Close();
+        writer.Dispose();
     }
 
-    public void LoadFromFile(string filename, out List<VertexBinary> vertices, out List<TriangleBinary> triangles)
+    public int LoadFromFile(string filename, int currentVerts)
     {
-        vertices = new List<VertexBinary>();
-        triangles = new List<TriangleBinary>();
+        loadedVertices = new List<VertexBinary>();
+        loadedTriangles = new List<TriangleBinary>();
 
-        using (BinaryReader reader = new BinaryReader(File.Open(filename, FileMode.Open)))
+        int totalVerts, totalTris, newVerts;
+        BinaryReader reader = new BinaryReader(File.Open(filename, FileMode.Open));
+        
+        totalVerts = reader.ReadInt32();
+        newVerts = totalVerts - currentVerts;
+
+        for (int i = 0; i < currentVerts; i++)
         {
-            
+            loadedVertices.Add(DeserializeVertex(reader));
         }
+
+        for (int i = 0; i < newVerts; i++)
+        {
+            loadedVertices.Add(DeserializeVertexNew(reader));
+        }
+
+        totalTris = reader.ReadInt32();
+
+        for (int i = 0; i < totalTris; i++)
+        {
+            loadedTriangles.Add(DeserializeTriangle(reader));
+        }
+        reader.Close();
+        reader.Dispose();
+
+        return newVerts;
     }
 }

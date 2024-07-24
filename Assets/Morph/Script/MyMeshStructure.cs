@@ -5,6 +5,7 @@ using System.Diagnostics;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using Debug = UnityEngine.Debug;
+using System.IO;
 public class MyMeshStructure : MonoBehaviour
 {
     private MeshFilter meshFilter;
@@ -132,7 +133,6 @@ public class MyMeshStructure : MonoBehaviour
         for (int i = 0; i < baseTriangles.Length; i += 3)
         {
             Triangle triangle = new Triangle();
-            triangle.vertices = new List<Vertex>();
             for (int j = 0; j < 3; j++)
             {
                 ipj = i + j;
@@ -270,97 +270,148 @@ public class MyMeshStructure : MonoBehaviour
         stopwatch.Stop();
         Debug.Log("Time taken to decimate mesh: " + stopwatch.ElapsedMilliseconds + " ms");
     }
-    public void MeshRefiningTriangleSplitting(int faceCount, bool baked)
+    public void MeshRefiningTriangleSplitting(int faceCount, bool baked, string objectName)
     {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
-        GenerateMeshStructure(baked);
-        Debug.Log("Current Face Count: " + trianglesData.Count);
-        Vertex vcore, ncore;
-        Triangle tempTriangle;
-        Vertex v1,v2,v3;
-        Triangle t1,t2,t3;
-        long vcoreTravelIndex = 0;
-        int currentFaceCount = trianglesData.Count;
-        while (true)
-        {
-            if (currentFaceCount >= faceCount - 1)
-            {
-                if (currentFaceCount == faceCount - 1)
-                {
-                    vcoreTravelIndex = Random.Range(0, verticesData.Count);
-                    vcore = verticesData[(int)vcoreTravelIndex];
-                    // while (vcore.isNull)
-                    // {
-                    //     vcore = verticesData[(int)(vcoreTravelIndex++ % verticesData.Count)];
-                    // }
-                    tempTriangle = vcore.triangles[0];
-                    Vertex n1 = null, n2 = null;
-                    for (int i=0;i<3;i++) if (tempTriangle.vertices[i] != vcore)
-                    {
-                        if (n1 == null) n1 = tempTriangle.vertices[i];
-                        else n2 = tempTriangle.vertices[i];
-                    }
-                    vcore.position = (n1.position + n2.position) / 2;
-                    vcore.normal = (n1.normal + n2.normal) / 2;
-                    vcore.uv = (n1.uv + n2.uv) / 2;
-                    vcore.isChanged = true;
-                    vcore.changedData.Add(n1.index); vcore.changedData.Add(n2.index);
-                    tempTriangle.vertices.ForEach(vertex => vertex.triangles.Remove(tempTriangle));
-                    tempTriangle.isNull = true; currentFaceCount--;
-                    tempTriangle.vertices.ForEach(vertex => 
-                    {
-                        if (vertex.triangles.Count == 0) 
-                        vertex.isNull = true;
-                    });
-                } else break;
-            }
-            else
-            {
-                vcoreTravelIndex = Random.Range(0, verticesData.Count);
-                ncore = verticesData[(int)vcoreTravelIndex];
-                // while (ncore.isNull)
-                // {
-                //     ncore = verticesData[(int)(vcoreTravelIndex++ % verticesData.Count)];
-                // }
-                tempTriangle = ncore.triangles[0];
-                v1 = tempTriangle.vertices[0];
-                v2 = tempTriangle.vertices[1];
-                v3 = tempTriangle.vertices[2];
-                
-                tempTriangle.isNull = true;
-                v1.triangles.Remove(tempTriangle); v2.triangles.Remove(tempTriangle); v3.triangles.Remove(tempTriangle);
-                vcore = new Vertex();
-                vcore.position = (v1.position + v2.position + v3.position) / 3;
-                vcore.normal = (v1.normal + v2.normal + v3.normal) / 3;
-                vcore.uv = (v1.uv + v2.uv + v3.uv) / 3;
-                vcore.index = verticesData.Count;
-                vcore.newData.Add(v1.index); vcore.newData.Add(v2.index); vcore.newData.Add(v3.index);
-                verticesData.Add(vcore);
-                t1 = new Triangle();
-                t1.vertices = new List<Vertex>();
-                t1.vertices.Add(v1); t1.vertices.Add(v2); t1.vertices.Add(vcore);
-                v1.triangles.Add(t1); v2.triangles.Add(t1); vcore.triangles.Add(t1);
-                trianglesData.Add(t1);
-                t2 = new Triangle();
-                t2.vertices = new List<Vertex>();
-                t2.vertices.Add(v2); t2.vertices.Add(v3); t2.vertices.Add(vcore);
-                v2.triangles.Add(t2); v3.triangles.Add(t2); vcore.triangles.Add(t2);
-                trianglesData.Add(t2);
-                t3 = new Triangle();
-                t3.vertices = new List<Vertex>();
-                t3.vertices.Add(v3); t3.vertices.Add(v1); t3.vertices.Add(vcore);
-                v3.triangles.Add(t3); v1.triangles.Add(t3); vcore.triangles.Add(t3);
-                trianglesData.Add(t3);
-                currentFaceCount += 2;
-            }
-        }
-        binarySave.SaveToFile("test.bin", verticesData, trianglesData);
-
         List<Vertex> copyTempVerticesData = new List<Vertex>();
         List<Triangle> copyTempTrianglesData = new List<Triangle>();
-        for (int i=0;i<verticesData.Count;i++) if (!verticesData[i].isNull) copyTempVerticesData.Add(verticesData[i]);
-        for (int i=0;i<trianglesData.Count;i++) if (!trianglesData[i].isNull) copyTempTrianglesData.Add(trianglesData[i]);
+        String file = "Assets\\MeshData\\" +  objectName + faceCount + ".bin";
+
+        if (File.Exists(file))
+        {
+            int newVert = binarySave.LoadFromFile(file, basePositions.Length);
+            GenerateMeshStructure(baked);
+            int currentVerts = verticesData.Count;
+            int totalVerts = currentVerts + newVert;
+            int shrink = 0;
+
+            for (int i=0;i<verticesData.Count;i++)
+            {
+                if (binarySave.loadedVertices[i].IsNull)
+                {
+                    shrink++;
+                }
+                else
+                {
+                    if (binarySave.loadedVertices[i].Changed)
+                    {
+                        verticesData[i].position = (verticesData[binarySave.loadedVertices[i].ChangedDat1].position + verticesData[binarySave.loadedVertices[i].ChangedDat2].position) / 2;
+                        verticesData[i].normal = (verticesData[binarySave.loadedVertices[i].ChangedDat1].normal + verticesData[binarySave.loadedVertices[i].ChangedDat2].normal) / 2;
+                        verticesData[i].uv = (verticesData[binarySave.loadedVertices[i].ChangedDat1].uv + verticesData[binarySave.loadedVertices[i].ChangedDat2].uv) / 2;
+                    }
+                    
+                    verticesData[i].index = i - shrink;
+                    copyTempVerticesData.Add(verticesData[i]);
+                }
+            }
+
+            for (int i=currentVerts;i<totalVerts;i++)
+            {
+                Vertex vertex = new Vertex();
+                vertex.position = (verticesData[binarySave.loadedVertices[i].NewDat1].position + verticesData[binarySave.loadedVertices[i].NewDat2].position + verticesData[binarySave.loadedVertices[i].NewDat3].position) / 3;
+                vertex.normal = (verticesData[binarySave.loadedVertices[i].NewDat1].normal + verticesData[binarySave.loadedVertices[i].NewDat2].normal + verticesData[binarySave.loadedVertices[i].NewDat3].normal) / 3;
+                vertex.uv = (verticesData[binarySave.loadedVertices[i].NewDat1].uv + verticesData[binarySave.loadedVertices[i].NewDat2].uv + verticesData[binarySave.loadedVertices[i].NewDat3].uv) / 3;
+
+                vertex.index = i - shrink;
+                copyTempVerticesData.Add(vertex);
+                verticesData.Add(vertex);
+            }
+
+            for (int i=0;i<binarySave.loadedTriangles.Count;i++)
+            {
+                if (!binarySave.loadedTriangles[i].IsNull)
+                {
+                    Triangle triangle = new Triangle();
+                    triangle.vertices.Add(copyTempVerticesData[verticesData[binarySave.loadedTriangles[i].V1].index]);
+                    triangle.vertices.Add(copyTempVerticesData[verticesData[binarySave.loadedTriangles[i].V2].index]);
+                    triangle.vertices.Add(copyTempVerticesData[verticesData[binarySave.loadedTriangles[i].V3].index]);
+
+                    copyTempTrianglesData.Add(triangle);
+                }
+            }
+        }
+        else
+        {
+            GenerateMeshStructure(baked);
+            Debug.Log("Current Face Count: " + trianglesData.Count);
+            Vertex vcore, ncore;
+            Triangle tempTriangle;
+            Vertex v1,v2,v3;
+            Triangle t1,t2,t3;
+            long vcoreTravelIndex = 0;
+            int currentFaceCount = trianglesData.Count;
+            while (true)
+            {
+                if (currentFaceCount >= faceCount - 1)
+                {
+                    if (currentFaceCount == faceCount - 1)
+                    {
+                        vcoreTravelIndex = Random.Range(0, verticesData.Count);
+                        vcore = verticesData[(int)vcoreTravelIndex];
+                        tempTriangle = vcore.triangles[0];
+                        Vertex n1 = null, n2 = null;
+                        for (int i=0;i<3;i++) if (tempTriangle.vertices[i] != vcore)
+                        {
+                            if (n1 == null) n1 = tempTriangle.vertices[i];
+                            else n2 = tempTriangle.vertices[i];
+                        }
+                        vcore.position = (n1.position + n2.position) / 2;
+                        vcore.normal = (n1.normal + n2.normal) / 2;
+                        vcore.uv = (n1.uv + n2.uv) / 2;
+                        vcore.isChanged = true;
+                        vcore.changedData.Add(n1.index); vcore.changedData.Add(n2.index);
+                        tempTriangle.vertices.ForEach(vertex => vertex.triangles.Remove(tempTriangle));
+                        tempTriangle.isNull = true; currentFaceCount--;
+                        tempTriangle.vertices.ForEach(vertex => 
+                        {
+                            if (vertex.triangles.Count == 0) 
+                            vertex.isNull = true;
+                        });
+                    } else break;
+                }
+                else
+                {
+                    vcoreTravelIndex = Random.Range(0, verticesData.Count);
+                    ncore = verticesData[(int)vcoreTravelIndex];
+                    tempTriangle = ncore.triangles[0];
+                    v1 = tempTriangle.vertices[0];
+                    v2 = tempTriangle.vertices[1];
+                    v3 = tempTriangle.vertices[2];
+                    
+                    tempTriangle.isNull = true;
+                    v1.triangles.Remove(tempTriangle); v2.triangles.Remove(tempTriangle); v3.triangles.Remove(tempTriangle);
+                    vcore = new Vertex();
+                    vcore.position = (v1.position + v2.position + v3.position) / 3;
+                    vcore.normal = (v1.normal + v2.normal + v3.normal) / 3;
+                    vcore.uv = (v1.uv + v2.uv + v3.uv) / 3;
+                    vcore.index = verticesData.Count;
+                    vcore.newData.Add(v1.index); vcore.newData.Add(v2.index); vcore.newData.Add(v3.index);
+                    verticesData.Add(vcore);
+                    t1 = new Triangle();
+                    t1.vertices = new List<Vertex>();
+                    t1.vertices.Add(v1); t1.vertices.Add(v2); t1.vertices.Add(vcore);
+                    v1.triangles.Add(t1); v2.triangles.Add(t1); vcore.triangles.Add(t1);
+                    trianglesData.Add(t1);
+                    t2 = new Triangle();
+                    t2.vertices = new List<Vertex>();
+                    t2.vertices.Add(v2); t2.vertices.Add(v3); t2.vertices.Add(vcore);
+                    v2.triangles.Add(t2); v3.triangles.Add(t2); vcore.triangles.Add(t2);
+                    trianglesData.Add(t2);
+                    t3 = new Triangle();
+                    t3.vertices = new List<Vertex>();
+                    t3.vertices.Add(v3); t3.vertices.Add(v1); t3.vertices.Add(vcore);
+                    v3.triangles.Add(t3); v1.triangles.Add(t3); vcore.triangles.Add(t3);
+                    trianglesData.Add(t3);
+                    currentFaceCount += 2;
+                }
+            }
+            binarySave.SaveToFile(file, verticesData, trianglesData);
+
+            for (int i=0;i<verticesData.Count;i++) if (!verticesData[i].isNull) copyTempVerticesData.Add(verticesData[i]);
+            for (int i=0;i<trianglesData.Count;i++) if (!trianglesData[i].isNull) copyTempTrianglesData.Add(trianglesData[i]);
+        }
+
         verticesData = copyTempVerticesData;
         trianglesData = copyTempTrianglesData;
         Debug.Log("Vertex Count: " + verticesData.Count + "-----Final Vertex Count: " + verticesData.Count);
@@ -420,6 +471,6 @@ public class Vertex
 }
 public class Triangle
 {
-    public List<Vertex> vertices;
+    public List<Vertex> vertices = new List<Vertex>();
     public bool isNull = false;
 }
