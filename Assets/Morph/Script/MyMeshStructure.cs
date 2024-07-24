@@ -31,6 +31,7 @@ public class MyMeshStructure : MonoBehaviour
     private List<Vertex> verticesData;
     private List<Triangle> trianglesData;
     private Material mainMaterial;
+    private BinarySave binarySave = new BinarySave();
     public MeshFilter MeshFilter { get => meshFilter; set => meshFilter = value; }
     public SkinnedMeshRenderer SkinnedMeshRenderer { get => skinnedMeshRenderer; set => skinnedMeshRenderer = value; }
     public bool MeshFilterBool { get => meshFilterBool; set => meshFilterBool = value; }
@@ -110,6 +111,7 @@ public class MyMeshStructure : MonoBehaviour
                 vertex.position = bakedPosition[i];
                 vertex.normal = baseNormals[i];
                 vertex.uv = baseUVs[i];
+                vertex.index = i;
                 verticesData.Add(vertex);
             }
         }
@@ -288,10 +290,10 @@ public class MyMeshStructure : MonoBehaviour
                 {
                     vcoreTravelIndex = Random.Range(0, verticesData.Count);
                     vcore = verticesData[(int)vcoreTravelIndex];
-                    while (vcore.isNull)
-                    {
-                        vcore = verticesData[(int)(vcoreTravelIndex++ % verticesData.Count)];
-                    }
+                    // while (vcore.isNull)
+                    // {
+                    //     vcore = verticesData[(int)(vcoreTravelIndex++ % verticesData.Count)];
+                    // }
                     tempTriangle = vcore.triangles[0];
                     Vertex n1 = null, n2 = null;
                     for (int i=0;i<3;i++) if (tempTriangle.vertices[i] != vcore)
@@ -302,6 +304,8 @@ public class MyMeshStructure : MonoBehaviour
                     vcore.position = (n1.position + n2.position) / 2;
                     vcore.normal = (n1.normal + n2.normal) / 2;
                     vcore.uv = (n1.uv + n2.uv) / 2;
+                    vcore.isChanged = true;
+                    vcore.changedData.Add(n1.index); vcore.changedData.Add(n2.index);
                     tempTriangle.vertices.ForEach(vertex => vertex.triangles.Remove(tempTriangle));
                     tempTriangle.isNull = true; currentFaceCount--;
                     tempTriangle.vertices.ForEach(vertex => 
@@ -315,21 +319,23 @@ public class MyMeshStructure : MonoBehaviour
             {
                 vcoreTravelIndex = Random.Range(0, verticesData.Count);
                 ncore = verticesData[(int)vcoreTravelIndex];
-                while (ncore.isNull)
-                {
-                    ncore = verticesData[(int)(vcoreTravelIndex++ % verticesData.Count)];
-                }
+                // while (ncore.isNull)
+                // {
+                //     ncore = verticesData[(int)(vcoreTravelIndex++ % verticesData.Count)];
+                // }
                 tempTriangle = ncore.triangles[0];
                 v1 = tempTriangle.vertices[0];
                 v2 = tempTriangle.vertices[1];
                 v3 = tempTriangle.vertices[2];
-                // trianglesData.Remove(tempTriangle);
+                
                 tempTriangle.isNull = true;
                 v1.triangles.Remove(tempTriangle); v2.triangles.Remove(tempTriangle); v3.triangles.Remove(tempTriangle);
                 vcore = new Vertex();
                 vcore.position = (v1.position + v2.position + v3.position) / 3;
                 vcore.normal = (v1.normal + v2.normal + v3.normal) / 3;
                 vcore.uv = (v1.uv + v2.uv + v3.uv) / 3;
+                vcore.index = verticesData.Count;
+                vcore.newData.Add(v1.index); vcore.newData.Add(v2.index); vcore.newData.Add(v3.index);
                 verticesData.Add(vcore);
                 t1 = new Triangle();
                 t1.vertices = new List<Vertex>();
@@ -349,6 +355,8 @@ public class MyMeshStructure : MonoBehaviour
                 currentFaceCount += 2;
             }
         }
+        binarySave.SaveToFile("test.bin", verticesData, trianglesData);
+
         List<Vertex> copyTempVerticesData = new List<Vertex>();
         List<Triangle> copyTempTrianglesData = new List<Triangle>();
         for (int i=0;i<verticesData.Count;i++) if (!verticesData[i].isNull) copyTempVerticesData.Add(verticesData[i]);
@@ -390,7 +398,11 @@ public class Vertex
     public Vector3 normal;
     public Vector2 uv;
     public List<Triangle> triangles = new List<Triangle>();
+    public bool isChanged = false;
+    public List<int> changedData = new List<int>();
+    public List<int> newData = new List<int>();
     public bool isNull = false;
+    public int index;
     public int finalIndex;
     public String ToString()
     {
