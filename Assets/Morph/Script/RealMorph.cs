@@ -44,15 +44,12 @@ public class RealMorph : MonoBehaviour
 
     public void PrepareMorphing()
     {
-        targetMyGameObject.isPlayable = false;
-        targetMyGameObject.animator.speed = 0;
-
         targetBakedMesh = new Mesh();
         morphMaterial.SetTexture("_MainTex", sourceMeshStructure.MainMaterial.mainTexture);
         morphMaterial.SetTexture("_MorphTex", targetMeshStructure.MainMaterial.mainTexture);
         morphMaterial.SetFloat("_TimeScale", 2 / morphTime);
         // targetMaterial = targetMeshStructure.MainMaterial;
-        targetMaterial.SetTexture("_MainTex", targetMeshStructure.MainMaterial.mainTexture);
+        // targetMaterial.SetTexture("_MainTex", targetMeshStructure.MainMaterial.mainTexture);
         sourceVertices = sourceMeshStructure.BasePositions;
         sourceTriangles = sourceMeshStructure.BaseTriangles;
 
@@ -74,8 +71,8 @@ public class RealMorph : MonoBehaviour
 
         if (sourceTriangles.Length > targetTriangles.Length)
         {
-            if (sourceMeshStructure.MeshFilterBool) sourceMeshStructure.MeshDecimatingVertexMerging(targetTriangles.Length / 3, false);
-            else sourceMeshStructure.MeshDecimatingVertexMerging(targetTriangles.Length / 3, true);
+            if (sourceMeshStructure.MeshFilterBool) sourceMeshStructure.MeshDecimatingVertexMerging(targetTriangles.Length / 3, false, sourceMyGameObject.name);
+            else sourceMeshStructure.MeshDecimatingVertexMerging(targetTriangles.Length / 3, true, sourceMyGameObject.name);
 
             sourceVertices = sourceMeshStructure.DecimatedPositions;
             sourceUVs = sourceMeshStructure.DecimatedUVs;
@@ -97,11 +94,12 @@ public class RealMorph : MonoBehaviour
         StoreDataForEachTriangle();
     }
 
-    public void StartMorphing()
+    public void StartMorphing(string animation)
     {
         transform.position = sourceMyGameObject.transform.position;
         transform.rotation = sourceMyGameObject.transform.rotation;
         sourceMyGameObject.gameObject.SetActive(false);
+        targetMyGameObject.PlayAnimationInSuspense(animation);
         
         PrepareMorphing();
 
@@ -121,11 +119,10 @@ public class RealMorph : MonoBehaviour
     {
         yield return new WaitForSeconds(morphTime);
 
-        targetMyGameObject.isPlayable = true;
-        targetMyGameObject.animator.speed = 1;
+        targetMyGameObject.ResumeAnimation();
         targetMyGameObject.transform.position = transform.position;
         targetMyGameObject.transform.rotation = transform.rotation;
-        targetMyGameObject.animator.Play("Idle");
+        targetMyGameObject.isPlayable = true;
         gameObject.SetActive(false);
     }
 

@@ -62,10 +62,6 @@ Shader "Custom/RealMorphV2"
                 float3 normal1 : NORMAL;
                 float3 normal2 : NORMAL;
                 float3 normal3 : NORMAL;
-                float3 triangle1TravelDirection : POSITION;
-                float3 v0MaxPos : POSITION;
-                float3 v1MaxPos : POSITION;
-                float3 v2MaxPos : POSITION;
             };
 
             sampler2D _MainTex;

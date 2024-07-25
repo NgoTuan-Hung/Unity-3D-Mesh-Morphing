@@ -49,14 +49,26 @@ public class MyGameObject : MonoBehaviour
         if (isPlayable) animator.SetBool("Attack", true);
     }
 
+    public void PlayAnimationInSuspense(string animation)
+    {
+        if (animation.Equals("Attack")) animator.SetBool("Attack", true);
+        animator.speed = 0;
+    }
+
+    public void ResumeAnimation()
+    {
+        animator.speed = 1;
+    }
+
     void StopAttack()
     {
         animator.SetBool("Attack", false);
     }
 
+    public string animation;
     void Morph(InputAction.CallbackContext context)
     {
-        if (isPlayable) realMorph.StartMorphing();
+        if (isPlayable) realMorph.StartMorphing(animation);
     }
 
     // Update is called once per frame

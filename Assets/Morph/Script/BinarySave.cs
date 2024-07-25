@@ -128,13 +128,36 @@ public class BinarySave
         writer.Dispose();
     }
 
-    public int LoadFromFile(string filename, int currentVerts)
+    public void LoadFromFile(string fileName)
+    {
+        loadedVertices = new List<VertexBinary>();
+        loadedTriangles = new List<TriangleBinary>();
+
+        BinaryReader reader = new(File.Open(fileName, FileMode.Open));
+        int totalVerts = reader.ReadInt32();
+
+        for (int i = 0; i < totalVerts; i++)
+        {
+            loadedVertices.Add(DeserializeVertex(reader));
+        }
+
+        int totalTris = reader.ReadInt32();
+
+        for (int i = 0; i < totalTris; i++)
+        {
+            loadedTriangles.Add(DeserializeTriangle(reader));
+        }
+        reader.Close();
+        reader.Dispose();
+    }
+
+    public int LoadFromFile(string fileName, int currentVerts)
     {
         loadedVertices = new List<VertexBinary>();
         loadedTriangles = new List<TriangleBinary>();
 
         int totalVerts, totalTris, newVerts;
-        BinaryReader reader = new BinaryReader(File.Open(filename, FileMode.Open));
+        BinaryReader reader = new BinaryReader(File.Open(fileName, FileMode.Open));
         
         totalVerts = reader.ReadInt32();
         newVerts = totalVerts - currentVerts;
