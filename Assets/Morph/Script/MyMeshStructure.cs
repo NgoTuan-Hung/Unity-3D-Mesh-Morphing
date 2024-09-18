@@ -442,6 +442,26 @@ public class MyMeshStructure : MonoBehaviour
         stopwatch.Stop();
         Debug.Log("Time taken to refine mesh: " + stopwatch.ElapsedMilliseconds + " ms");
     }
+
+    public void QuadricErrorInit()
+    {
+        float a, b, c, d;
+        verticesData.ForEach(vertex => 
+        {
+            vertex.triangles.ForEach(triangle => 
+            {
+                Plane plane = new Plane(triangle.vertices[0].position, triangle.vertices[1].position, triangle.vertices[2].position);
+                a = plane.normal.x;
+                b = plane.normal.y;
+                c = plane.normal.z;
+                d = -a*triangle.vertices[0].position.x - b*triangle.vertices[0].position.y - c*triangle.vertices[0].position.z;
+                vertex.q.SetRow(0, vertex.q.GetRow(0) + new Vector4(a*a, a*b, a*c, a*d));
+                vertex.q.SetRow(1, vertex.q.GetRow(1) + new Vector4(a*b, b*b, b*c, b*d));
+                vertex.q.SetRow(2, vertex.q.GetRow(2) + new Vector4(a*c, b*c, c*c, c*d));
+                vertex.q.SetRow(3, vertex.q.GetRow(3) + new Vector4(a*d, b*d, c*d, d*d));
+            });
+        });
+    }
 }
 public class Vertex
 {
@@ -455,6 +475,7 @@ public class Vertex
     public bool isNull = false;
     public int index;
     public int finalIndex;
+    public Matrix4x4 q = Matrix4x4.zero;
     public String ToString()
     {
         return "Position: " + position.ToString() + "-----Normal: " + normal.ToString() + "-----UV: " + uv.ToString() + "-----Triangle Count: " + triangles.Count;
