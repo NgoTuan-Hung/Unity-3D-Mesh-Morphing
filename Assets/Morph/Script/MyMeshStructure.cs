@@ -141,7 +141,6 @@ public class MyMeshStructure : MonoBehaviour
             }
             trianglesData.Add(triangle);
         }
-        
     }
     public void MeshDecimatingVertexMerging(int faceCount, bool baked)
     {
@@ -450,16 +449,46 @@ public class MyMeshStructure : MonoBehaviour
         {
             vertex.triangles.ForEach(triangle => 
             {
-                Plane plane = new Plane(triangle.vertices[0].position, triangle.vertices[1].position, triangle.vertices[2].position);
-                a = plane.normal.x;
-                b = plane.normal.y;
-                c = plane.normal.z;
-                d = -a*triangle.vertices[0].position.x - b*triangle.vertices[0].position.y - c*triangle.vertices[0].position.z;
+                Vector3 normal = Vector3.Normalize(Vector3.Cross(triangle.vertices[1].position - triangle.vertices[0].position, triangle.vertices[2].position - triangle.vertices[0].position));
+                a = normal.x;
+                b = normal.y;
+                c = normal.z;
+                d = -Vector3.Dot(normal, triangle.vertices[0].position);
                 vertex.q.SetRow(0, vertex.q.GetRow(0) + new Vector4(a*a, a*b, a*c, a*d));
                 vertex.q.SetRow(1, vertex.q.GetRow(1) + new Vector4(a*b, b*b, b*c, b*d));
                 vertex.q.SetRow(2, vertex.q.GetRow(2) + new Vector4(a*c, b*c, c*c, c*d));
                 vertex.q.SetRow(3, vertex.q.GetRow(3) + new Vector4(a*d, b*d, c*d, d*d));
             });
+        });
+
+        Matrix4x4 v1q;
+        Matrix4x4 v2q;
+        Matrix4x4 temp, temp1;
+        float error = 0;
+        Vector4 target, tempMTarget;
+        trianglesData.ForEach(triangle => 
+        {
+            for (int i=0;i<3;i++)
+            {
+                temp = Matrix4x4.zero;
+                v1q = triangle.vertices[i].q;
+                v2q = triangle.vertices[(i+1)%3].q;
+                temp.SetRow(0, v1q.GetRow(0) + v2q.GetRow(0));
+                temp.SetRow(1, v1q.GetRow(1) + v2q.GetRow(1));
+                temp.SetRow(2, v1q.GetRow(2) + v2q.GetRow(2));
+                temp.SetRow(3, v1q.GetRow(3) + v2q.GetRow(3));
+
+                temp1 = new Matrix4x4();
+                temp1.SetRow(0, temp.GetRow(0));
+                temp1.SetRow(1, temp.GetRow(1));
+                temp1.SetRow(2, temp.GetRow(2));
+                temp1.SetRow(3, new Vector4(0, 0, 0, 1));
+                
+                target = temp1.inverse * new Vector4(0, 0, 0, 1);
+                tempMTarget = temp * target;
+                error = Vector4.Dot(target, tempMTarget);
+                print("v1q: " + v1q.ToString() + "-----v2q: " + v2q.ToString() + "-----temp: " + temp.ToString() + "-----target: " + target.ToString() + "-----Error: " + error + "-----tempMTarget: " + tempMTarget.ToString());
+            }
         });
     }
 }
