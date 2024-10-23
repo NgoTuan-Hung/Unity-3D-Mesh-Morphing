@@ -6,6 +6,7 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 using Debug = UnityEngine.Debug;
 using System.IO;
+using System.Linq;
 public class MyMeshStructure : MonoBehaviour
 {
     private MeshFilter meshFilter;
@@ -124,6 +125,7 @@ public class MyMeshStructure : MonoBehaviour
                 vertex.position = basePositions[i];
                 vertex.normal = baseNormals[i];
                 vertex.uv = baseUVs[i];
+                vertex.index = i;
                 verticesData.Add(vertex);
             }
         }
@@ -442,6 +444,7 @@ public class MyMeshStructure : MonoBehaviour
         Debug.Log("Time taken to refine mesh: " + stopwatch.ElapsedMilliseconds + " ms");
     }
 
+    public List<PairInfo> pairInfos = new List<PairInfo>();
     public void QuadricErrorInit()
     {
         float a, b, c, d;
@@ -487,8 +490,16 @@ public class MyMeshStructure : MonoBehaviour
                 target = temp1.inverse * new Vector4(0, 0, 0, 1);
                 tempMTarget = temp * target;
                 error = Vector4.Dot(target, tempMTarget);
-                print("v1q: " + v1q.ToString() + "-----v2q: " + v2q.ToString() + "-----temp: " + temp.ToString() + "-----target: " + target.ToString() + "-----Error: " + error + "-----tempMTarget: " + tempMTarget.ToString());
+                pairInfos.Add(new PairInfo(triangle.vertices[i].index, triangle.vertices[(i+1)%3].index, error));
             }
+        });
+
+        // sort pairInfos base on error
+        pairInfos = pairInfos.OrderBy(x => x.error).ToList();
+        pairInfos.ForEach(pair => 
+        {
+            // print pair and it error
+            Debug.Log("Index1: " + pair.index1 + " Index2: " + pair.index2 + " Error: " + pair.error);
         });
     }
 }
@@ -523,4 +534,18 @@ public class Triangle
 {
     public List<Vertex> vertices = new List<Vertex>();
     public bool isNull = false;
+}
+
+public class PairInfo
+{
+    public int index1;
+    public int index2;
+    public float error;
+
+    public PairInfo(int index1, int index2, float error)
+    {
+        this.index1 = index1;
+        this.index2 = index2;
+        this.error = error;
+    }
 }
