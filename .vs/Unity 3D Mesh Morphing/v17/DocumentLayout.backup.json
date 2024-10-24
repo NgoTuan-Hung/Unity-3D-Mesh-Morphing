@@ -1,0 +1,54 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\Program\\Unity\\Project\\test\\Unity 3D Mesh Morphing\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{83EB774B-73A5-D74B-DF9B-7A45CA26D643}|Assembly-CSharp.csproj|d:\\program\\unity\\project\\test\\unity 3d mesh morphing\\assets\\morph\\script\\mymeshstructure.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{83EB774B-73A5-D74B-DF9B-7A45CA26D643}|Assembly-CSharp.csproj|solutionrelative:assets\\morph\\script\\mymeshstructure.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{83EB774B-73A5-D74B-DF9B-7A45CA26D643}|Assembly-CSharp.csproj|d:\\program\\unity\\project\\test\\unity 3d mesh morphing\\assets\\morph\\script\\quadricerrormetrics\\testqem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{83EB774B-73A5-D74B-DF9B-7A45CA26D643}|Assembly-CSharp.csproj|solutionrelative:assets\\morph\\script\\quadricerrormetrics\\testqem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MyMeshStructure.cs",
+              "DocumentMoniker": "D:\\Program\\Unity\\Project\\test\\Unity 3D Mesh Morphing\\Assets\\Morph\\Script\\MyMeshStructure.cs",
+              "RelativeDocumentMoniker": "Assets\\Morph\\Script\\MyMeshStructure.cs",
+              "ToolTip": "D:\\Program\\Unity\\Project\\test\\Unity 3D Mesh Morphing\\Assets\\Morph\\Script\\MyMeshStructure.cs",
+              "RelativeToolTip": "Assets\\Morph\\Script\\MyMeshStructure.cs",
+              "ViewState": "AgIAANwBAAAAAAAAAAAQwPoBAAAmAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-24T05:32:12.789Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "TestQEM.cs",
+              "DocumentMoniker": "D:\\Program\\Unity\\Project\\test\\Unity 3D Mesh Morphing\\Assets\\Morph\\Script\\QuadricErrorMetrics\\TestQEM.cs",
+              "RelativeDocumentMoniker": "Assets\\Morph\\Script\\QuadricErrorMetrics\\TestQEM.cs",
+              "ToolTip": "D:\\Program\\Unity\\Project\\test\\Unity 3D Mesh Morphing\\Assets\\Morph\\Script\\QuadricErrorMetrics\\TestQEM.cs",
+              "RelativeToolTip": "Assets\\Morph\\Script\\QuadricErrorMetrics\\TestQEM.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-24T05:28:34.801Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
