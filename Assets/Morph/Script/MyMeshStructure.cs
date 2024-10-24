@@ -504,12 +504,9 @@ public class MyMeshStructure : MonoBehaviour
             v3.uv = (v1.uv + v2.uv) / 2;
             verticesData.Add(v3);
 
-            /* might be fresh */
             v1.triangles.ForEach(triangle => {triangle.SwitchVertex(v1, v3); v3.triangles.Add(triangle);});
             v2.triangles.ForEach(triangle => {triangle.SwitchVertex(v2, v3); v3.triangles.Add(triangle);});
-            /*  */
 
-            // remove pairs that contains both v1 and v2
             pairInfos.RemoveAll(pair => pair.vertices.Contains(v1) || pair.vertices.Contains(v2));
             verticesData.Remove(v1); verticesData.Remove(v2);
 
@@ -534,29 +531,53 @@ public class MyMeshStructure : MonoBehaviour
             finalQEMUVs[i] = verticesData[i].uv;
         }
 
+        int index;
         for (int i = 0; i < trianglesData.Count; i++)
         {
             for (int j = 0; j < 3; j++)
             {
-                finalQEMTriangles[i * 3 + j] = verticesData.IndexOf(trianglesData[i].vertices[j]);
+                index = verticesData.IndexOf(trianglesData[i].vertices[j]);
+                print(index);
+                finalQEMTriangles[i * 3 + j] = index;
             }
         }
         
 
         if (meshFilterBool)
         {
-            //
-            meshFilter.mesh.SetVertices(finalQEMVerices);
-            meshFilter.mesh.SetUVs(0, finalQEMUVs);
-            meshFilter.mesh.SetTriangles(finalQEMTriangles, 0);
-            meshFilter.mesh.RecalculateNormals();
+            meshFilter.sharedMesh = new Mesh();
+            meshFilter.sharedMesh.SetVertices(finalQEMVerices);
+            meshFilter.sharedMesh.SetUVs(0, finalQEMUVs);
+            meshFilter.sharedMesh.SetTriangles(finalQEMTriangles, 0);
+            meshFilter.sharedMesh.RecalculateNormals();
         }
         else
         {
+            skinnedMeshRenderer.sharedMesh = new Mesh();
             skinnedMeshRenderer.sharedMesh.SetVertices(finalQEMVerices);
             skinnedMeshRenderer.sharedMesh.SetUVs(0, finalQEMUVs);
             skinnedMeshRenderer.sharedMesh.SetTriangles(finalQEMTriangles, 0);
             skinnedMeshRenderer.sharedMesh.RecalculateNormals();
+        }
+    }
+
+    public void RevertMesh()
+    {
+        if (meshFilterBool)
+        {
+            meshFilter.sharedMesh = new Mesh();
+            meshFilter.sharedMesh.SetVertices(basePositions);
+            meshFilter.sharedMesh.SetUVs(0, baseUVs);
+            meshFilter.sharedMesh.SetTriangles(baseTriangles, 0);
+            meshFilter.sharedMesh.SetNormals(baseNormals);
+        }
+        else
+        {
+            skinnedMeshRenderer.sharedMesh.Clear();
+            skinnedMeshRenderer.sharedMesh.SetVertices(basePositions);
+            skinnedMeshRenderer.sharedMesh.SetUVs(0, baseUVs);
+            skinnedMeshRenderer.sharedMesh.SetTriangles(baseTriangles, 0);
+            skinnedMeshRenderer.sharedMesh.SetNormals(baseNormals);
         }
     }
 }
@@ -626,7 +647,6 @@ public class Triangle
 
     public void SwitchVertex(Vertex from, Vertex to)
     {
-        /* Problem we are facing: vertices does not contain from */
         vertices[vertices.IndexOf(from)] = to;
     }
 }

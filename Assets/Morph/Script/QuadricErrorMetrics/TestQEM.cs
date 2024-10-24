@@ -16,5 +16,7 @@ public class TestQEM : MonoBehaviour
             myMeshStructure.QuadricErrorInit();
             myMeshStructure.QuadricErrorStart(targetFaceCount);
         }
+
+        if (Input.GetKey(KeyCode.R)) myMeshStructure.RevertMesh();
     }
 }
