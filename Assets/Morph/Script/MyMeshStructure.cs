@@ -451,6 +451,41 @@ public class MyMeshStructure : MonoBehaviour
         verticesData.ForEach(vertex => vertex.CalculateQ());
         AddPairFromTriangles(trianglesData);
         print("Current face count: " + trianglesData.Count);
+        //Debugging(verticesData[0]);
+    }
+
+    public void Debugging(PairInfo pairInfo)
+    {
+        Matrix4x4 v1q;
+        Matrix4x4 v2q;
+        Matrix4x4 temp, temp1;
+        float error;
+        Vector4 target, tempMTarget;
+        
+        temp = Matrix4x4.zero;
+        v1q = pairInfo.vertices[0].q;
+        v2q = pairInfo.vertices[1].q;
+        temp.SetRow(0, v1q.GetRow(0) + v2q.GetRow(0));
+        temp.SetRow(1, v1q.GetRow(1) + v2q.GetRow(1));
+        temp.SetRow(2, v1q.GetRow(2) + v2q.GetRow(2));
+        temp.SetRow(3, v1q.GetRow(3) + v2q.GetRow(3));
+
+        temp1 = new Matrix4x4();
+        temp1.SetRow(0, temp.GetRow(0));
+        temp1.SetRow(1, temp.GetRow(1));
+        temp1.SetRow(2, temp.GetRow(2));
+        temp1.SetRow(3, new Vector4(0, 0, 0, 1));
+
+        print("temp1: " + temp1);
+        print("temp1 inverse: " + temp1.inverse);
+        print("check inverse:" +  temp1 * temp1.inverse);
+        
+        target = temp1.inverse * new Vector4(0, 0, 0, 1);
+        print("target: " + target.ToString("F5"));
+        tempMTarget = temp * target;
+        print("tempMTarget: " + tempMTarget.ToString("F5"));
+        error = Vector4.Dot(target, tempMTarget);
+        print("error: " + error.ToString("F5"));
     }
 
     public void AddPairFromTriangles(List<Triangle> triangles)
@@ -460,13 +495,14 @@ public class MyMeshStructure : MonoBehaviour
         Matrix4x4 temp, temp1;
         float error = 0;
         Vector4 target, tempMTarget;
+        int i2;
         triangles.ForEach(triangle => 
         {
             for (int i=0;i<3;i++)
             {
                 temp = Matrix4x4.zero;
                 v1q = triangle.vertices[i].q;
-                v2q = triangle.vertices[(i+1)%3].q;
+                v2q = triangle.vertices[i2 = (i+1)%3].q;
                 temp.SetRow(0, v1q.GetRow(0) + v2q.GetRow(0));
                 temp.SetRow(1, v1q.GetRow(1) + v2q.GetRow(1));
                 temp.SetRow(2, v1q.GetRow(2) + v2q.GetRow(2));
@@ -481,7 +517,32 @@ public class MyMeshStructure : MonoBehaviour
                 target = temp1.inverse * new Vector4(0, 0, 0, 1);
                 tempMTarget = temp * target;
                 error = Vector4.Dot(target, tempMTarget);
-                pairInfos.Add(new PairInfo(triangle.vertices[i], triangle.vertices[(i+1)%3], error, target));
+
+                if (temp1.determinant == 0)
+                {
+                    print("temp1 determinant is 0");
+                    Vector3 mid = (triangle.vertices[i].position + triangle.vertices[i2].position) / 2;
+                    float errorP0 = Vector4.Dot(triangle.vertices[i].position, temp * triangle.vertices[i].position);
+                    float errorP1 = Vector4.Dot(triangle.vertices[i2].position, temp * triangle.vertices[i2].position);
+                    float errorMid = Vector4.Dot(mid, temp * mid);
+                    if (errorP0 <= errorP1 && errorP0 <= errorMid)
+                    {
+                        target = triangle.vertices[i].position;
+                        error = errorP0;
+                    }
+                    else if (errorP1 <= errorP0 && errorP1 <= errorMid)
+                    {
+                        target = triangle.vertices[i2].position;
+                        error = errorP1;
+                    }
+                    else
+                    {
+                        target = mid;
+                        error = errorMid;
+                    }
+                }
+
+                pairInfos.Add(new PairInfo(triangle.vertices[i], triangle.vertices[i2], error, target));
             }
         });
 
@@ -537,7 +598,6 @@ public class MyMeshStructure : MonoBehaviour
             for (int j = 0; j < 3; j++)
             {
                 index = verticesData.IndexOf(trianglesData[i].vertices[j]);
-                print(index);
                 finalQEMTriangles[i * 3 + j] = index;
             }
         }
